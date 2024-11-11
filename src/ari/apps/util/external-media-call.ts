@@ -1,6 +1,8 @@
 /**
  * @author Jefferson Alves Reis (jefaokpta) < jefaokpta@hotmail.com >
  * Date: 11/11/24
+ * comando para converter audio.raw para mp3
+ * ffmpeg -f s16le -ar 16000 -ac 1 -i audio.raw -b:a 128k -filter:a "volume=1.5" output.mp3
  */
 import { Channel, Client } from 'ari-client';
 import { Logger } from '@nestjs/common';
