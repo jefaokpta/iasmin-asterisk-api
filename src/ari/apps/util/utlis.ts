@@ -40,7 +40,7 @@ function createBridgeForChannels(ari: Client, channel: Channel, dialedChannel: C
   channel.answer()
     .catch((err) => {if (err) throw err.message});
 
-  dialedChannel.on('StasisEnd', () => {
+  dialedChannel.on('StasisEnd', (stasisEnd, dialedChannel) => {
     bridgeDestroy(bridge, dialedChannel);
   })
 
