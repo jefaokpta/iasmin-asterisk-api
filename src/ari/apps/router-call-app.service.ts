@@ -33,6 +33,14 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       channel.ring((err) => {if (err) throw err.message});
       const dialedChannel = ari.Channel();
 
+      channel.on('StasisEnd', () => {
+        originalChannelHangup(channel, dialedChannel);
+      })
+
+      dialedChannel.on('ChannelDestroyed', () => {
+        dialedChannelHangup(channel, dialedChannel);
+      })
+
       dialedChannel.on('StasisStart', (stasisStartEvent: StasisStart, dialedChannel: Channel) => {
         createBridgeForChannels(channel, dialedChannel);
       })
@@ -53,14 +61,19 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     function createBridgeForChannels(channel: Channel, dialedChannel: Channel) {
       const bridge = ari.Bridge();
 
-      channel.answer((err) => {if (err) throw err.message});
+      channel.answer()
+        .catch((err) => {if (err) throw err.message});
 
-      bridge.create({type: 'mixing'}, (err, bridge) => {
-        if (err) throw err.message;
-        Logger.log(`Bridge ${bridge.id} criada`, 'RouterCallAppService');
-      });
+      dialedChannel.on('StasisEnd', () => {
+        bridgeDestroy(bridge, dialedChannel);
+      })
 
-      addChannelsToBridge(channel, dialedChannel, bridge);
+      bridge.create({type: 'mixing'})
+        .then((bridge) => {
+          Logger.log(`Bridge ${bridge.id} criada`, 'RouterCallAppService');
+          addChannelsToBridge(channel, dialedChannel, bridge);
+        })
+        .catch((err) => {if (err) throw err.message});
     }
 
     function addChannelsToBridge(channel: Channel, dialedChannel: Channel, bridge: Bridge) {
@@ -70,7 +83,25 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       });
 
     }
-    //todo: tratar desligamentos de chamadas de ambos os lados
+
+    function originalChannelHangup(channel: Channel, dialedChannel: Channel) {
+      Logger.log(`Canal ${channel.name} desligou, desligando ${dialedChannel.name}`, 'RouterCallAppService')
+      dialedChannel.hangup()
+        .catch((err) => Logger.error('Canal Original desligado', err.message, 'RouterCallAppService'));
+    }
+
+    function dialedChannelHangup(channel: Channel, dialedChannel: Channel) {
+      Logger.log(`Canal ${dialedChannel.name} desligou, desligando ${channel.name}`, 'RouterCallAppService')
+      channel.hangup()
+        .catch((err) => Logger.error('Canal Discado desligado', err.message, 'RouterCallAppService'));
+    }
+
+    function bridgeDestroy(bridge: Bridge, dialedChannel: Channel) {
+      Logger.log(`Canal discado ${dialedChannel.name} desligou, Bridge ${bridge.id} será destruída`, 'RouterCallAppService')
+      bridge.destroy()
+        .catch((err) => Logger.error(`Bridge do canal ${dialedChannel.name} destruída`, err.message, 'RouterCallAppService'));
+    }
+
     ari.on('StasisStart', stasisStart)
 
     ari.start('router-call-app')
