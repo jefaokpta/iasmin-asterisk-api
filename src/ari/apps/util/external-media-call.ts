@@ -11,9 +11,12 @@ export async function externalMediaCall(ari: Client, channel: Channel) {
   await ari.start("externalMedia");
 
   function closeAllResources(){
-    if (bridge) bridge.destroy();
-    if (channel) channel.hangup();
-    if (externalMediaChannel) externalMediaChannel.hangup();
+    if (bridge) bridge.destroy()
+      .catch((err) => Logger.error(`Destruindo bridge ${bridge.id}`, err.message, 'RouterCallAppService'));
+    if (channel) channel.hangup()
+      .catch((err) => Logger.error(`Desligando canal ${channel.name}`, err.message, 'RouterCallAppService'));
+    if (externalMediaChannel) externalMediaChannel.hangup()
+      .catch((err) => Logger.error(`Desligando canal ${externalMediaChannel.name}`, err.message, 'RouterCallAppService'));
   }
 
   const bridge = ari.Bridge();
@@ -28,6 +31,9 @@ export async function externalMediaCall(ari: Client, channel: Channel) {
   })
 
   channel.answer()
+  channel.on('StasisEnd', (stasisEnd, channel) => {
+    closeAllResources();
+  })
   bridge.addChannel({channel: channel.id})
     .catch((err) => Logger.error(`Adicionando canal ${channel.name} ao bridge`, err.message, 'RouterCallAppService'));
 
