@@ -9,11 +9,11 @@ export function originateDialedChannel(ari: Client, channel: Channel) {
   channel.ring((err) => {if (err) throw err.message});
   const dialedChannel = ari.Channel();
 
-  channel.on('StasisEnd', () => {
+  channel.on('StasisEnd', (stasisEnd, channel) => {
     originalChannelHangup(channel, dialedChannel);
   })
 
-  dialedChannel.on('ChannelDestroyed', () => {
+  dialedChannel.on('ChannelDestroyed', (event, dialedChannel) => {
     dialedChannelHangup(channel, dialedChannel);
   })
 
