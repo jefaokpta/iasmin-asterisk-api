@@ -15,9 +15,9 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
   onApplicationBootstrap() {
     connect(
-      this.configService.get('AST_HOST')!,
-      this.configService.get('AST_USER')!,
-      this.configService.get('AST_PASS')!,
+      this.configService.get('ARI_HOST')!,
+      this.configService.get('ARI_USER')!,
+      this.configService.get('ARI_PASS')!,
       this.ariReady,
     );
   }
