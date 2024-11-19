@@ -3,11 +3,12 @@
  * Date: 11/18/24
  */
 
-// @ts-ignore
+// @ts-expect-error
 import * as Manager from 'asterisk-manager';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CdrService } from './cdr.service';
+import { Cdr } from '../models/cdr';
 
 @Injectable()
 export class AmiConnectionService implements OnApplicationBootstrap {
@@ -30,6 +31,6 @@ export class AmiConnectionService implements OnApplicationBootstrap {
 
     Logger.log('AMI Conectado 🚀', 'AmiConnectionService');
 
-    this.ami.on('cdr', (cdr: any) => this.cdrService.cdrCreated(cdr));
+    this.ami.on('cdr', (cdr: any) => this.cdrService.cdrCreated(new Cdr(cdr)));
   }
 }
