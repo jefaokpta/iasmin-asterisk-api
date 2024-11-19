@@ -5,12 +5,16 @@
 
 // @ts-ignore
 import * as Manager from 'asterisk-manager';
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CdrService } from './cdr.service';
 
 @Injectable()
 export class AmiConnectionService implements OnApplicationBootstrap {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly cdrService: CdrService
+  ) {}
   private ami: Manager;
 
   onApplicationBootstrap() {
@@ -24,12 +28,8 @@ export class AmiConnectionService implements OnApplicationBootstrap {
 
     this.ami.keepConnected();
 
-    this.ami.on('managerevent', (evt: any) => {
-      console.log(evt);
-    })
-  }
+    Logger.log('AMI Conectado 🚀', 'AmiConnectionService');
 
-  getAmi() {
-    return this.ami;
+    this.ami.on('cdr', (cdr: any) => this.cdrService.cdrCreated(cdr));
   }
 }
