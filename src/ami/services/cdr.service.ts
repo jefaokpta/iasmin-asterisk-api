@@ -17,6 +17,7 @@ export class CdrService {
 
   private readonly log = new Logger(CdrService.name);
   private readonly HTTP_REQUEST_TIMEOUT = 4000;
+  private readonly IASMIN_BACKEND_API = this.configService.get('IASMIN_BACKEND_API');
 
   cdrCreated(cdr: Cdr) {
     //todo: converter audio pra mp3
@@ -24,8 +25,10 @@ export class CdrService {
     this.sendCdrToBackend(cdr)
   }
 
+
+
   private sendCdrToBackend(cdr: Cdr) {
-    firstValueFrom(this.httpService.post(`${this.configService.get('IASMIN_BACKEND_API')}/cdr`, cdr, {
+    firstValueFrom(this.httpService.post(`${this.IASMIN_BACKEND_API}/cdr`, cdr, {
       timeout: this.HTTP_REQUEST_TIMEOUT,
     }))
       .then((response) => this.log.log('CDR enviada com sucesso', response.data))
