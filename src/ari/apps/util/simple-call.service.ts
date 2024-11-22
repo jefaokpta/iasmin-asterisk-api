@@ -41,7 +41,7 @@ export class SimpleCallService{
     );
   }
 
-  private createBridgeForChannels(ari: Client, channel: Channel, dialedChannel: Channel) {
+  private async createBridgeForChannels(ari: Client, channel: Channel, dialedChannel: Channel) {
     const bridge = ari.Bridge();
 
     channel.answer()
@@ -51,28 +51,30 @@ export class SimpleCallService{
       this.bridgeDestroy(bridge, dialedChannel);
     })
 
-    bridge.create({type: 'mixing'})
+    await bridge.create({type: 'mixing'})
       .then((bridge) => {
         Logger.log(`Bridge ${bridge.id} criada`, 'RouterCallAppService.createBridgeForChannels');
-        this.addChannelsToBridge(channel, dialedChannel, bridge, ari);
+        this.addChannelsToBridge(channel, dialedChannel, bridge);
       })
       .catch((err) => {if (err) throw err.message});
+
+    bridge.record({
+      name: 'bla',
+      format: 'sln',
+    }, ari.LiveRecording('liveRecordingLocalsln'))
+      .then((liveRecording) => {
+        liveRecording.on('RecordingFinished', (event, liveRecording) => {
+          Logger.log(`Gravação ${liveRecording.name} finalizada`, 'Gravacao finalizada');
+        })
+      })
+      .catch((err) => Logger.error('Erro ao gravar chamada', err.message, 'RouterCallAppService'));
   }
 
-  private addChannelsToBridge(channel: Channel, dialedChannel: Channel, bridge: Bridge, ari: Client) {
-    ari.LiveRecording().listStored().then((recordings) => {
-      Logger.log(`Gravações ativas: ${recordings.length}`, 'RouterCallAppService.addChannelsToBridge');
-      recordings.forEach((recording) => Logger.log(recording.name));
-    }) //todo: remove this line
+  private addChannelsToBridge(channel: Channel, dialedChannel: Channel, bridge: Bridge) {
     bridge.addChannel({channel: [channel.id, dialedChannel.id]}, (err) => {
       if (err) throw err.message;
       Logger.log(`Canais ${channel.id} e ${dialedChannel.id} adicionados à bridge ${bridge.id}`, 'RouterCallAppService.addChannelsToBridge');
     });
-    bridge.record({
-      name: this.createRecordFileName(channel),
-      format: 'wav'
-    }, ari.LiveRecording()) //todo: gerenciar fechamento de gravação no fim da chamada
-      .catch((err) => Logger.error('Erro ao gravar chamada', err.message, 'RouterCallAppService'));
   }
 
   private originalChannelHangup(channel: Channel, dialedChannel: Channel) {
@@ -97,7 +99,7 @@ export class SimpleCallService{
     const now = new Date();
     const date = now.toISOString().split('T')[0].replace(/-/g, '');
     const time = now.toTimeString().split(' ')[0].replace(/:/g, '');
-    return `${this.AUDIO_RECORD}/${date}_${time}_${channel.caller.number}_${channel.dialplan.exten}_${channel.id}.wav`;
+    return `${date}_${time}_${channel.caller.number}_${channel.dialplan.exten}_${channel.id}.wav`;
   }
 
 }
