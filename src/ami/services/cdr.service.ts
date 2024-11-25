@@ -23,10 +23,14 @@ export class CdrService {
 
   async cdrCreated(cdr: Cdr) {
     if (!cdr.company) return;
-    const callRecord = this.createRecordFileName(cdr);
-    const cdrCopy = { ...cdr, callRecord };
-    if (cdr.billableSeconds > 0) await this.convertAudioToMp3(cdrCopy);
-    this.sendCdrToBackend(cdrCopy);
+    if (cdr.billableSeconds > 0) {
+      const callRecordName = this.createRecordFileName(cdr);
+      const cdrCopy = { ...cdr, callRecord: callRecordName };
+      await this.convertAudioToMp3(cdrCopy);
+      this.sendCdrToBackend(cdrCopy);
+      return
+    }
+    this.sendCdrToBackend(cdr);
   }
 
   private async convertAudioToMp3(cdr: Cdr) {
