@@ -4,10 +4,10 @@ After=network.target
 
 
 [Service]
-StandardOutput=file:/var/log/iasmin-asterisk-manager.log
+StandardOutput=file:/var/log/iasmin-asterisk-api.log
 #StandardOutput=null
-WorkingDirectory=/opt/iasmin-asterisk-manager
-ExecStart=npm start:prod
+WorkingDirectory=/opt/iasmin-asterisk-api
+ExecStart=npm run start:prod
 Restart=always
 RestartSec=300s
 
