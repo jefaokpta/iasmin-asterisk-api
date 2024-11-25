@@ -4,13 +4,10 @@
  */
 import { Bridge, Channel, Client, StasisStart } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SimpleCallService{
-  constructor(private readonly configService: ConfigService) {}
-
-  private readonly AUDIO_RECORD = this.configService.get('AUDIO_RECORD')!;
+  constructor() {}
 
   originateDialedChannel(ari: Client, channel: Channel) {
     channel.ring((err) => {if (err) throw err.message});
@@ -59,15 +56,10 @@ export class SimpleCallService{
       .catch((err) => {if (err) throw err.message});
 
     bridge.record({
-      name: 'bla',
+      name: 'nao_nomeia_a_gravacao',
       format: 'sln',
-    }, ari.LiveRecording('liveRecordingLocalsln'))
-      .then((liveRecording) => {
-        liveRecording.on('RecordingFinished', (event, liveRecording) => {
-          Logger.log(`Gravação ${liveRecording.name} finalizada`, 'Gravacao finalizada');
-        })
-      })
-      .catch((err) => Logger.error('Erro ao gravar chamada', err.message, 'RouterCallAppService'));
+    }, ari.LiveRecording(channel.id))
+      .catch((err) => Logger.error('Erro ao gravar chamada', err.message));
   }
 
   private addChannelsToBridge(channel: Channel, dialedChannel: Channel, bridge: Bridge) {
@@ -93,13 +85,6 @@ export class SimpleCallService{
     Logger.log(`Canal discado ${dialedChannel.name} desligou, Bridge ${bridge.id} será destruída`, 'RouterCallAppService.bridgeDestroy');
     bridge.destroy()
       .catch((err) => Logger.error(`Bridge do canal ${dialedChannel.name} destruída`, err.message, 'RouterCallAppService'));
-  }
-
-  private createRecordFileName(channel: Channel): string {
-    const now = new Date();
-    const date = now.toISOString().split('T')[0].replace(/-/g, '');
-    const time = now.toTimeString().split(' ')[0].replace(/:/g, '');
-    return `${date}_${time}_${channel.caller.number}_${channel.dialplan.exten}_${channel.id}.wav`;
   }
 
 }

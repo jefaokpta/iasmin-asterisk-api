@@ -17,42 +17,51 @@ export class CdrService {
     private readonly configService: ConfigService,
   ) {}
 
-  private readonly log = new Logger(CdrService.name);
   private readonly HTTP_REQUEST_TIMEOUT = 4000;
   private readonly IASMIN_BACKEND_API = this.configService.get('IASMIN_BACKEND_API');
   private readonly AUDIO_RECORD = this.configService.get('AUDIO_RECORD');
 
   async cdrCreated(cdr: Cdr) {
     if (!cdr.company) return;
-    // await this.convertAudioToMp3(cdr);
-    this.sendCdrToBackend(cdr);
+    const callRecord = this.createRecordFileName(cdr);
+    const cdrCopy = { ...cdr, callRecord };
+    await this.convertAudioToMp3(cdrCopy);
+    this.sendCdrToBackend(cdrCopy);
   }
 
   private async convertAudioToMp3(cdr: Cdr) {
-    this.log.log('Convertendo arquivo de audio para mp3', cdr.callRecord);
-    const audioFile = `${this.AUDIO_RECORD}/${cdr.callRecord}.wav`;
-    const command = `ffmpeg -i ${audioFile} -vn -acodec libmp3lame -ab 128k ${audioFile.replace('.wav', '.mp3')}`;
+    Logger.log(`Convertendo arquivo de audio para mp3 ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
+    const audioFilePath = `${this.AUDIO_RECORD}/${cdr.uniqueId}.sln`;
+    const mp3FilePath = `${this.AUDIO_RECORD}/mp3s/${cdr.callRecord}`;
+    const command = `ffmpeg -i ${audioFilePath} -vn -acodec libmp3lame -ab 128k ${mp3FilePath}`;
     execSync(command);
-    this.log.log('Arquivo de audio convertido para mp3', cdr.callRecord);
-    this.deleteWavFile(audioFile);
+    Logger.log(`Arquivo de audio convertido para mp3 ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
+    this.deleteWavFile(audioFilePath);
   }
 
   private deleteWavFile(audioFile: string) {
     fs.unlink(audioFile, (err) => {
-      if (err) this.log.error(err.message, 'CdrService.deleteWavFile');
+      if (err) Logger.error(err.message, 'CdrService.deleteWavFile');
     });
   }
 
   private sendCdrToBackend(cdr: Cdr) {
-    this.log.log(`Enviando CDR para o backend`, CdrService.name);
+    Logger.log(`Enviando CDR para o backend`, 'CdrService.sendCdrToBackend');
     firstValueFrom(
       this.httpService.post(`${this.IASMIN_BACKEND_API}/cdr`, cdr, {
         timeout: this.HTTP_REQUEST_TIMEOUT,
       }),
     )
       .then((response) =>
-        this.log.log('CDR enviada com sucesso', response.data),
+        Logger.log(`CDR enviada com sucesso! ${response.data}`, 'CdrService.sendCdrToBackend'),
       )
-      .catch((e) => this.log.error(e.response.data.message, 'CdrService'));
+      .catch((e) => Logger.error(e.response.data.message, 'CdrService.sendCdrToBackend'));
   }
+
+  private createRecordFileName(cdr: Cdr): string {
+    const date = cdr.startTime.split(' ')[0].replace(/-/g, '');
+    const time = cdr.startTime.split(' ')[1].replace(/:/g, '');
+    return `${date}_${time}_${cdr.src}_${cdr.destination}_${cdr.uniqueId}.mp3`;
+  }
+
 }
