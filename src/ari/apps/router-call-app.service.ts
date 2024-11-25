@@ -8,6 +8,7 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { externalMediaCall } from './util/external-media-call';
 import { SimpleCallService } from './util/simple-call.service';
+import { exec } from 'node:child_process';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
@@ -35,6 +36,15 @@ export class RouterCallAppService implements OnApplicationBootstrap {
           );
       }
     );
+    const command = 'ls -l /opt';
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        Logger.error(`exec error: ${error}`, 'RouterCallAppService.onApplicationBootstrap');
+        return;
+      }
+      Logger.log(`stdout: ${stdout}`, 'RouterCallAppService.onApplicationBootstrap');
+      Logger.error(`stderr: ${stderr}`, 'RouterCallAppService.onApplicationBootstrap');
+    })
   }
 
   private stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
