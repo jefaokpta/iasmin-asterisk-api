@@ -58,7 +58,7 @@ export class SimpleCallService{
     bridge.record({
       name: 'nao_nomeia_a_gravacao',
       format: 'sln',
-    }, ari.LiveRecording(channel.id))
+    }, ari.LiveRecording(channel.id.replace('.', '-')))
       .catch((err) => Logger.error('Erro ao gravar chamada', err.message));
   }
 

@@ -31,7 +31,7 @@ export class CdrService {
 
   private async convertAudioToMp3(cdr: Cdr) {
     Logger.log(`Convertendo arquivo de audio para mp3 ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
-    const audioFilePath = `${this.AUDIO_RECORD}/${cdr.uniqueId}.sln`;
+    const audioFilePath = `${this.AUDIO_RECORD}/${cdr.uniqueId.replace('.', '-')}.sln`;
     const mp3FilePath = `${this.AUDIO_RECORD}/mp3s/${cdr.callRecord}`;
     const command = `ffmpeg -i ${audioFilePath} -vn -acodec libmp3lame -ab 128k ${mp3FilePath}`;
     try {
@@ -62,7 +62,7 @@ export class CdrService {
   private createRecordFileName(cdr: Cdr): string {
     const date = cdr.startTime.split(' ')[0].replace(/-/g, '');
     const time = cdr.startTime.split(' ')[1].replace(/:/g, '');
-    return `${date}_${time}_${cdr.src}_${cdr.destination}_${cdr.uniqueId}.mp3`;
+    return `${date}_${time}_${cdr.src}_${cdr.destination}_${cdr.uniqueId.replace('.', '-')}.mp3`;
   }
 
 }
