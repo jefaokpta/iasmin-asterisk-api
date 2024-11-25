@@ -51,8 +51,7 @@ export class CdrService {
       this.httpService.post(`${this.IASMIN_BACKEND_API}/cdr`, cdr, {
         timeout: this.HTTP_REQUEST_TIMEOUT,
       }),
-    )
-      .then((response) =>
+    ).then((response) =>
         Logger.log(`CDR enviada com sucesso! ${response.data}`, 'CdrService.sendCdrToBackend'),
       )
       .catch((e) => Logger.error(e.response.data.message, 'CdrService.sendCdrToBackend'));
