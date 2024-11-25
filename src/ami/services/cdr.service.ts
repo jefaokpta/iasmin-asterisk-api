@@ -25,7 +25,7 @@ export class CdrService {
     if (!cdr.company) return;
     const callRecord = this.createRecordFileName(cdr);
     const cdrCopy = { ...cdr, callRecord };
-    await this.convertAudioToMp3(cdrCopy);
+    if (cdr.billableSeconds > 0) await this.convertAudioToMp3(cdrCopy);
     this.sendCdrToBackend(cdrCopy);
   }
 
@@ -34,7 +34,9 @@ export class CdrService {
     const audioFilePath = `${this.AUDIO_RECORD}/${cdr.uniqueId}.sln`;
     const mp3FilePath = `${this.AUDIO_RECORD}/mp3s/${cdr.callRecord}`;
     const command = `ffmpeg -i ${audioFilePath} -vn -acodec libmp3lame -ab 128k ${mp3FilePath}`;
-    execSync(command);
+    try {
+      execSync(command, { stdio: 'ignore' });
+    } catch (e) {Logger.error(`Erro ao converter audio ${e.message()}`, 'CdrService.convertAudioToMp3')}
     Logger.log(`Arquivo de audio convertido para mp3 ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
     this.deleteWavFile(audioFilePath);
   }
