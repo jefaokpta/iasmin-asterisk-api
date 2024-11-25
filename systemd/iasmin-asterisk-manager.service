@@ -28,7 +28,7 @@ Environment=ASTERISK_CONFIG=/opt/asterisk-api-enviroment/asterisk
 Environment=PABX_TRUNK=Iasmin
 Environment=PABX_TECH_PREFIX=100023
 
-Environment=AUDIO_RECORD=/opt/asterisk-api-enviroment/varSpoolAsterisk/recordings
+Environment=AUDIO_RECORD=/opt/asterisk-api-enviroment/varSpoolAsterisk/recording
 Environment=AUDIO_MOH=/opt/asterisk-api-enviroment/varLibAsterisk/moh
 
 Environment=IASMIN_BACKEND_API=http://localhost:3001

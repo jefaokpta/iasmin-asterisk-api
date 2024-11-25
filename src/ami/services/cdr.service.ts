@@ -40,7 +40,7 @@ export class CdrService {
     const command = `ffmpeg -i ${audioFilePath} -vn -acodec libmp3lame -ab 128k ${mp3FilePath}`;
     try {
       execSync(command, { stdio: 'ignore' });
-    } catch (e) {Logger.error(`Erro ao converter audio ${e.message()}`, 'CdrService.convertAudioToMp3')}
+    } catch (e) {Logger.error(`Erro ao converter audio ${e.message}`, 'CdrService.convertAudioToMp3')}
     Logger.log(`Arquivo de audio convertido para mp3 ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
     this.deleteWavFile(audioFilePath);
   }
