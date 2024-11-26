@@ -9,6 +9,7 @@ import { firstValueFrom } from 'rxjs';
 import { Cdr } from '../models/cdr';
 import * as fs from 'node:fs';
 import { execSync } from 'node:child_process';
+import { threadId } from 'node:worker_threads';
 
 @Injectable()
 export class CdrService {
@@ -34,7 +35,7 @@ export class CdrService {
   }
 
   private async convertAudioToMp3(cdr: Cdr) {
-    Logger.log(`Convertendo arquivo de audio para mp3 ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
+    Logger.log(`Convertendo arquivo de audio para mp3 ${cdr.callRecord} usando THREAD ${threadId}`, 'CdrService.convertAudioToMp3');
     const audioFilePath = `${this.AUDIO_RECORD}/${cdr.uniqueId.replace('.', '-')}.sln`;
     const mp3FilePath = `${this.AUDIO_RECORD}/mp3s/${cdr.callRecord}`;
     const command = `ffmpeg -i ${audioFilePath} -vn -acodec libmp3lame -ab 128k ${mp3FilePath}`;
