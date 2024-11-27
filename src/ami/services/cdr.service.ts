@@ -8,8 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { Cdr } from '../models/cdr';
 import * as fs from 'node:fs';
-import { execSync } from 'node:child_process';
-import { threadId } from 'node:worker_threads';
+import { exec } from 'node:child_process';
 
 @Injectable()
 export class CdrService {
@@ -25,26 +24,23 @@ export class CdrService {
   async cdrCreated(cdr: Cdr) {
     if (!cdr.company) return;
     if (cdr.billableSeconds > 0) {
-      const callRecordName = this.createRecordFileName(cdr);
-      const cdrCopy = { ...cdr, callRecord: callRecordName };
-      await this.convertAudioToMp3(cdrCopy);
-      this.sendCdrToBackend(cdrCopy);
+      this.convertAudioToMp3({ ...cdr, callRecord: this.createRecordFileName(cdr) });
       return
     }
     this.sendCdrToBackend(cdr);
   }
 
-  private async convertAudioToMp3(cdr: Cdr) {
-    Logger.log(`Convertendo arquivo de audio para mp3 ${cdr.callRecord} usando THREAD ${threadId}`, 'CdrService.convertAudioToMp3');
+  private convertAudioToMp3(cdr: Cdr) {
+    Logger.log(`Convertendo arquivo de audio para mp3 ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
     const audioFilePath = `${this.AUDIO_RECORD}/${cdr.uniqueId.replace('.', '-')}.sln`;
     const mp3FilePath = `${this.AUDIO_RECORD}/mp3s/${cdr.callRecord}`;
     const command = `ffmpeg -i ${audioFilePath} -vn -acodec libmp3lame -ab 128k ${mp3FilePath}`;
-    try {
-      // execSync(command, { stdio: 'ignore' });
-      execSync('sleep 15');
-    } catch (e) {Logger.error(`Erro ao converter audio ${e.message}`, 'CdrService.convertAudioToMp3')}
-    Logger.log(`Arquivo de audio convertido para mp3 ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
-    this.deleteWavFile(audioFilePath);
+    exec(command, (err) => {
+      if (err) Logger.error(err.message, 'CdrService.convertAudioToMp3');
+      Logger.log(`Arquivo convertido com sucesso ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
+      this.sendCdrToBackend(cdr);
+      this.deleteWavFile(audioFilePath);
+    })
   }
 
   private deleteWavFile(audioFile: string) {
