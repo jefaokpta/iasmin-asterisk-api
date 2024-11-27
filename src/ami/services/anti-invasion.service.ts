@@ -54,6 +54,16 @@ export class AntiInvasionService {
     })
   }
 
+  public resetBlockedInvaders() {
+    this.blockedInvaders.clear();
+    this.invaders.clear();
+    try {
+      exec('iptables -F INPUT');
+    } catch (e) {
+      Logger.error(e.message, 'AntiInvasionService.resetBlockedInvaders');
+    }
+  }
+
   private getBlockedInvadersFromFile(): string[] {
     try {
       return JSON.parse(readFileSync('/tmp/blockedInvadersCandidates.json').toString());
@@ -76,5 +86,7 @@ export class AntiInvasionService {
       Logger.error(e.message, 'AntiInvasionService.blockInvadersIptables');
     }
   }
+
+
   
 }
