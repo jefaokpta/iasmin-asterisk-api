@@ -10,12 +10,14 @@ import { Cdr } from '../models/cdr';
 import * as fs from 'node:fs';
 import { execSync } from 'node:child_process';
 import { threadId } from 'node:worker_threads';
+import { CdrProducerService } from './queue/cdr-producer.service';
 
 @Injectable()
 export class CdrService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly cdrProducerService: CdrProducerService,
   ) {}
 
   private readonly HTTP_REQUEST_TIMEOUT = 4000;
@@ -24,14 +26,15 @@ export class CdrService {
 
   async cdrCreated(cdr: Cdr) {
     if (!cdr.company) return;
-    if (cdr.billableSeconds > 0) {
-      const callRecordName = this.createRecordFileName(cdr);
-      const cdrCopy = { ...cdr, callRecord: callRecordName };
-      await this.convertAudioToMp3(cdrCopy);
-      this.sendCdrToBackend(cdrCopy);
-      return
-    }
-    this.sendCdrToBackend(cdr);
+    await this.cdrProducerService.addCdrToQueue(cdr);
+    // if (cdr.billableSeconds > 0) {
+    //   const callRecordName = this.createRecordFileName(cdr);
+    //   const cdrCopy = { ...cdr, callRecord: callRecordName };
+    //   await this.convertAudioToMp3(cdrCopy);
+    //   this.sendCdrToBackend(cdrCopy);
+    //   return
+    // }
+    // this.sendCdrToBackend(cdr);
   }
 
   private async convertAudioToMp3(cdr: Cdr) {
