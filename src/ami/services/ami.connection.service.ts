@@ -3,18 +3,21 @@
  * Date: 11/18/24
  */
 
-// @ts-expect-error
+// @ts-expect-error - This is a workaround to avoid the error "Cannot find module 'asterisk-manager'".
 import * as Manager from 'asterisk-manager';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CdrService } from './cdr.service';
 import { Cdr } from '../models/cdr';
+import { AntiInvasionService } from './anti-invasion.service';
+import { Invader } from '../models/invader';
 
 @Injectable()
 export class AmiConnectionService implements OnApplicationBootstrap {
   constructor(
     private readonly configService: ConfigService,
-    private readonly cdrService: CdrService
+    private readonly cdrService: CdrService,
+    private readonly antiInvasionService: AntiInvasionService
   ) {}
   private ami: Manager;
 
@@ -32,5 +35,7 @@ export class AmiConnectionService implements OnApplicationBootstrap {
     Logger.log('AMI Conectado 🚀', 'AmiConnectionService');
 
     this.ami.on('cdr', (cdr: any) => this.cdrService.cdrCreated(new Cdr(cdr)));
+    this.ami.on('invalidaccountid', (invalidAccountId: any) => this.antiInvasionService.antiInvasion(new Invader(invalidAccountId)));
   }
+
 }
