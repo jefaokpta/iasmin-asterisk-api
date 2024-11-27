@@ -6,7 +6,7 @@ import { Bridge, Channel, Client, StasisStart } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
-export class SimpleCallService{
+export class SimpleExternalCallService {
   constructor() {}
 
   originateDialedChannel(ari: Client, channel: Channel) {

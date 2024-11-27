@@ -7,13 +7,15 @@ import { Channel, Client, connect, StasisStart } from 'ari-client';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { externalMediaCall } from './util/external-media-call';
-import { SimpleCallService } from './util/simple-call.service';
+import { SimpleExternalCallService } from './util/simple-external-call.service';
+import { SimpleInternalCallService } from './util/simple-internal-call.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
   constructor(
     private readonly configService: ConfigService,
-    private readonly simpleCallService: SimpleCallService,
+    private readonly simpleExternalCallService: SimpleExternalCallService,
+    private readonly simpleInternalCallService: SimpleInternalCallService
   ) {}
 
   onApplicationBootstrap() {
@@ -40,11 +42,16 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   private stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
     const company = stasisStartEvent.args[1];
     Logger.log(`Ligacao de ${channel.name} ${channel.caller.name} para ${channel.dialplan.exten} Empresa ${company}`, 'RouterCallAppService');
+    if (!company) return;
     if (channel.dialplan.exten === '123') {
       externalMediaCall(ari, channel);
       return;
     }
-    if (company) this.simpleCallService.originateDialedChannel(ari, channel);
+    if (channel.dialplan.exten.length < 8) {
+      this.simpleInternalCallService.originateDialedChannel(ari, channel);
+      return;
+    }
+    this.simpleExternalCallService.originateDialedChannel(ari, channel);
   }
 
 }
