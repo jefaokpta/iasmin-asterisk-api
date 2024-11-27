@@ -6,7 +6,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Invader } from '../models/invader';
 import { exec, execSync } from 'node:child_process';
-import { writeFile } from 'node:fs';
+import { readFileSync, writeFile } from 'node:fs';
 import { threadId } from 'node:worker_threads';
 
 @Injectable()
@@ -22,8 +22,6 @@ export class AntiInvasionService {
     } else {
       this.invaders.set(invader.ip, invader);
     }
-    const invaderDebug = this.invaders.get(invader.ip);
-    console.log(invader.ip, invaderDebug?.attempts, invaderDebug?.timestamp);
   }
   
   private blockOrSumInvader(invader: Invader) {
@@ -46,7 +44,10 @@ export class AntiInvasionService {
     if (this.blockedInvaders.size === 0) return;
     Logger.log('Verificando invasores bloqueados...', `AntiInvasionService.writeBlockedInvadersFile-${threadId}`);
     const blockedInvadersList = Array.from(this.blockedInvaders.keys());
-    if (JSON.stringify(blockedInvadersList) === JSON.stringify(this.getBlockedInvadersFromFile())) return;
+    if (JSON.stringify(blockedInvadersList) === JSON.stringify(this.getBlockedInvadersFromFile())){
+      Logger.log('Nenhum invasor novo bloqueado', `AntiInvasionService.writeBlockedInvadersFile-${threadId}`);
+      return;
+    }
     writeFile('/tmp/blockedInvadersCandidates.json', JSON.stringify(blockedInvadersList), (error) => {
       if (error) Logger.error(error.message);
       this.blockInvadersIptables(blockedInvadersList);
@@ -55,7 +56,7 @@ export class AntiInvasionService {
 
   private getBlockedInvadersFromFile(): string[] {
     try {
-      return JSON.parse(execSync('cat /tmp/blockedInvadersCandidates.json').toString());
+      return JSON.parse(readFileSync('/tmp/blockedInvadersCandidates.json').toString());
     } catch (error) {
       Logger.error(error.message, 'AntiInvasionService.getBlockedInvadersFromFile');
       return [];
@@ -63,6 +64,7 @@ export class AntiInvasionService {
   }
 
   private blockInvadersIptables(blockedInvaders: string[]) {
+    Logger.log(`Bloqueando invasores... ${blockedInvaders}`, `AntiInvasionService.blockInvadersIptables-${threadId}`);
     try{
       execSync('iptables -F INPUT')
       blockedInvaders.forEach((ip) => {

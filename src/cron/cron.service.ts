@@ -12,7 +12,7 @@ export class CronService {
   //   Logger.log(`Event loop is healthy THREAD ${threadId}`, 'CronService.eventLoopHealthCheck');
   // }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   writeBlockedInvadersFile() {
     this.antiInvasionService.writeBlockedInvadersFile();
   }
