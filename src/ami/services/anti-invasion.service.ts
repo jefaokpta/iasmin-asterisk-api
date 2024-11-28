@@ -42,12 +42,8 @@ export class AntiInvasionService {
 
   public writeBlockedInvadersFile() {
     if (this.blockedInvaders.size === 0) return;
-    Logger.log('Verificando invasores bloqueados...', `AntiInvasionService.writeBlockedInvadersFile-${threadId}`);
     const blockedInvadersList = Array.from(this.blockedInvaders.keys());
-    if (JSON.stringify(blockedInvadersList) === JSON.stringify(this.getBlockedInvadersFromFile())){
-      Logger.log('Nenhum invasor novo bloqueado', `AntiInvasionService.writeBlockedInvadersFile-${threadId}`);
-      return;
-    }
+    if (JSON.stringify(blockedInvadersList) === JSON.stringify(this.getBlockedInvadersFromFile())) return;
     writeFile('/tmp/blockedInvadersCandidates.json', JSON.stringify(blockedInvadersList), (error) => {
       if (error) Logger.error(error.message);
       this.blockInvadersIptables(blockedInvadersList);

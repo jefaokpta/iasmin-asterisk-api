@@ -25,13 +25,15 @@ export class SimpleInternalCallService {
       this.createBridgeForChannels(ari, channel, dialedChannel);
     })
 
-    dialedChannel.originate({
-        endpoint: `PJSIP/jefaokpta`,
-        timeout: 30,
-        app: 'router-call-app',
-        appArgs: 'dialed',
-        callerId: channel.dialplan.exten,
-    }).catch((err) => Logger.error('Erro ao originar chamada', err.message, 'SimpleInternalCallService.originateDialedChannel'));
+    // chamar todos os contacts de uma conta PJSIP
+
+    // dialedChannel.originate({
+    //     endpoint: `PJSIP/jefaokpta`,
+    //     timeout: 30,
+    //     app: 'router-call-app',
+    //     appArgs: 'dialed',
+    //     callerId: channel.dialplan.exten,
+    // }).catch((err) => Logger.error('Erro ao originar chamada', err.message, 'SimpleInternalCallService.originateDialedChannel'));
   }
 
   private async createBridgeForChannels(ari: Client, channel: Channel, dialedChannel: Channel) {
