@@ -30,7 +30,7 @@ export class AmiConnectionService implements OnApplicationBootstrap {
       true
     );
 
-    this.ami.keepConnected();
+    this.ami.keepConnected()
 
     Logger.log('AMI Conectado 🚀', 'AmiConnectionService');
 
