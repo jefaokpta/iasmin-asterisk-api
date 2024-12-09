@@ -26,7 +26,7 @@ export class SimpleInternalCallService {
     })
 
     dialedChannel.originate({
-        endpoint: `PJSIP/careca`,
+        endpoint: `PJSIP/${channel.dialplan.exten}`,
         timeout: 30,
         app: 'router-call-app',
         appArgs: 'dialed',
