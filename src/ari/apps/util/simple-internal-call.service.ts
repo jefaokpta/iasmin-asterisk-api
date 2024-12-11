@@ -25,8 +25,6 @@ export class SimpleInternalCallService {
       this.createBridgeForChannels(ari, channel, dialedChannel);
     })
 
-    console.log('identifica A ', channel.caller.number);
-
     dialedChannel.originate({
         endpoint: `PJSIP/${channel.dialplan.exten}`,
         timeout: 30,
