@@ -5,6 +5,6 @@ echo "Building and running Iasmin Asterisk Manager"
 git pull
 npm run build
 rm /var/log/iasmin-asterisk-api.log
-systemctl restart iasmin-asterisk-manager
+systemctl restart iasmin-asterisk-api
 
-echo "Iasmin Asterisk Manager is running"
+echo "Iasmin Asterisk API is running"
