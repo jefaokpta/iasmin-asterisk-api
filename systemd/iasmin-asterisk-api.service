@@ -11,27 +11,5 @@ ExecStart=npm run start:prod
 Restart=always
 RestartSec=300s
 
-Environment=NODE_ENV=production
-Environment=PORT=3000
-
-Environment=ARI_HOST=http://localhost:8088
-Environment=ARI_USER=ari_user
-Environment=ARI_PASS=ari_pass
-
-Environment=AMI_HOST=localhost
-Environment=AMI_PORT=5038
-Environment=AMI_USER=ami_user
-Environment=AMI_PASS=ami_pass
-
-Environment=ASTERISK_CONFIG=/opt/asterisk-api-environment/asterisk
-
-Environment=PABX_TRUNK=Iasmin
-Environment=PABX_TECH_PREFIX=100023
-
-Environment=AUDIO_RECORD=/opt/asterisk-api-environment/varSpoolAsterisk/recording
-Environment=AUDIO_MOH=/opt/asterisk-api-environment/varLibAsterisk/moh
-
-Environment=IASMIN_BACKEND_API=http://localhost:3001
-
 [Install]
 WantedBy=multi-user.target
