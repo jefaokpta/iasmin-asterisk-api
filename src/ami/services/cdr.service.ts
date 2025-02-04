@@ -60,7 +60,7 @@ export class CdrService {
       )
       .catch((e) => {
         Logger.error(e.message, 'CdrService.sendCdrToBackend');
-        if (e.response.data){
+        if (e.response?.data){
           Logger.error(e.response.data.message, 'CdrService.sendCdrToBackend');
         }
       });
