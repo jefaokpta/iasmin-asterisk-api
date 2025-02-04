@@ -31,7 +31,10 @@ export class SimpleInternalCallService {
         app: 'router-call-app',
         appArgs: 'dialed',
         callerId: channel.caller.number,
-    }).catch((err) => Logger.error('Erro ao originar chamada', err.message, 'SimpleInternalCallService.originateDialedChannel'));
+    }).catch((err) => {
+      Logger.error('Erro ao originar chamada', err.message, 'SimpleInternalCallService.originateDialedChannel')
+      channel.hangup()
+    });
   }
 
   private async createBridgeForChannels(ari: Client, channel: Channel, dialedChannel: Channel) {
