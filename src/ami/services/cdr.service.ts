@@ -17,7 +17,7 @@ export class CdrService {
     private readonly configService: ConfigService,
   ) {}
 
-  private readonly HTTP_REQUEST_TIMEOUT = 8000;
+  private readonly HTTP_REQUEST_TIMEOUT = 30000;
   private readonly IASMIN_BACKEND_API = this.configService.get('IASMIN_BACKEND_API');
   private readonly AUDIO_RECORD = this.configService.get('AUDIO_RECORD');
 
