@@ -58,7 +58,12 @@ export class CdrService {
     ).then((response) =>
         Logger.log(`CDR enviada com sucesso! ${response.data}`, 'CdrService.sendCdrToBackend'),
       )
-      .catch((e) => Logger.error(e.response.data.message, 'CdrService.sendCdrToBackend'));
+      .catch((e) => {
+        Logger.error(e.message, 'CdrService.sendCdrToBackend');
+        if (e.response.data){
+          Logger.error(e.response.data.message, 'CdrService.sendCdrToBackend');
+        }
+      });
   }
 
   private createRecordFileName(cdr: Cdr): string {
