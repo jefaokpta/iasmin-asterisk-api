@@ -22,7 +22,6 @@ export class CdrService {
   private readonly AUDIO_RECORD = this.configService.get('AUDIO_RECORD');
 
   async cdrCreated(cdr: Cdr) {
-    if (!cdr.company) return;
     if (cdr.billableSeconds > 0) {
       this.convertAudioToMp3({ ...cdr, callRecord: this.createRecordFileName(cdr) });
       return
@@ -56,7 +55,7 @@ export class CdrService {
         timeout: this.HTTP_REQUEST_TIMEOUT,
       }),
     ).then((response) =>
-        Logger.log(`CDR enviada com sucesso! ${response.data}`, 'CdrService.sendCdrToBackend'),
+        Logger.log(`CDR enviada com sucesso! ${cdr.channel} ${response.data}`, 'CdrService.sendCdrToBackend'),
       )
       .catch((e) => {
         Logger.error(e.message, 'CdrService.sendCdrToBackend');

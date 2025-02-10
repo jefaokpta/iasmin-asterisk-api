@@ -34,7 +34,10 @@ export class AmiConnectionService implements OnApplicationBootstrap {
 
     Logger.log('AMI Conectado 🚀', 'AmiConnectionService');
 
-    this.ami.on('cdr', (cdr: any) => this.cdrService.cdrCreated(new Cdr(cdr)));
+    this.ami.on('cdr', (cdr: any) => {
+      if (cdr.destination == 's') return;
+      this.cdrService.cdrCreated(new Cdr(cdr))
+    });
     this.ami.on('invalidaccountid', (invalidAccountId: any) => this.antiInvasionService.antiInvasion(new Invader(invalidAccountId)));
   }
 
