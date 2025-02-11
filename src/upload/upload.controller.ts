@@ -10,7 +10,7 @@ export class UploadController {
   @Post(':id')
   @UseInterceptors(FileInterceptor('audio'))
   uploadAudio(@UploadedFile() audio: Express.Multer.File, @Param('id') id: string) {
-    this.uploadService.uploadAudio(audio, id);  
+    return this.uploadService.uploadAudio(audio, id);  
   }
 
 }

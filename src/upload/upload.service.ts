@@ -9,11 +9,13 @@ export class UploadService {
   constructor(private readonly configService: ConfigService) {}
 
   uploadAudio(audio: Express.Multer.File, id: string) {
-    const tempPath = join(this.configService.get('AUDIO_RECORD')!, this.renameAudio(id));
+    const newName = this.renameAudio(id);
+    const tempPath = join(this.configService.get('AUDIO_RECORD')!, newName);
     writeFile(tempPath, audio.buffer, (err) => {
       if (err) Logger.error(`Erro ao salvar arquivo: ${err}`);
       else Logger.log('Arquivo salvo com sucesso!');
     });
+    return newName;
   }
 
   private renameAudio(id: string) {
