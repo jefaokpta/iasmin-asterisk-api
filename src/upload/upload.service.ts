@@ -11,7 +11,7 @@ export class UploadService {
   uploadAudio(audio: Express.Multer.File, id: string) {
     try {
       const newName = this.renameAudio(id);
-      const tempPath = join(this.configService.get('AUDIO_RECORD')!, newName);
+      const tempPath = join(this.configService.get('AUDIO_RECORD')!, 'mp3s', newName);
       writeFileSync(tempPath, audio.buffer);
       Logger.log('Arquivo salvo com sucesso!');
       return newName;
