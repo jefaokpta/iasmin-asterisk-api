@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PeerWriter } from './peer.writer';
 import { ConfigService } from '@nestjs/config';
-import { User } from './model/user.model';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { UserDto } from './dto/user.dto';
 
 describe('PeerWriter', () => {
     let service: PeerWriter;
@@ -26,7 +26,7 @@ describe('PeerWriter', () => {
     });
 
     it('deve gerar arquivo pjsip-peers.conf corretamente', async () => {
-        const users: User[] = [
+        const users: UserDto[] = [
             {
                 id: 3,
                 name: 'Teste User',

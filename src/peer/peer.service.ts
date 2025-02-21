@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { User } from './model/user.model';
-
+import { UserDto } from './dto/user.dto';
+import { PeerWriter } from './peer.writer';
 @Injectable()
 export class PeerService {
 
-  writePeers(users: User[]) {
+  constructor(private readonly peerWriter: PeerWriter) {}
 
+  writePeers(users: UserDto[]) {
+    this.peerWriter.writePeers(users);
   }
   
 }
