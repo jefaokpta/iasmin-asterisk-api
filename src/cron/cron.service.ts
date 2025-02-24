@@ -1,11 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { threadId } from 'node:worker_threads';
-import { AntiInvasionService } from '../ami/services/anti-invasion.service';
+import { AmiService } from '../ami/services/ami.service';
 
 @Injectable()
 export class CronService {
-  constructor(private readonly antiInvasionService: AntiInvasionService) {}
+  constructor(private readonly amiService: AmiService) {}
 
   // @Cron(CronExpression.EVERY_SECOND)
   // eventLoopHealthCheck() {
@@ -14,12 +13,12 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   writeBlockedInvadersFile() {
-    this.antiInvasionService.writeBlockedInvadersFile();
+    this.amiService.writeBlockedInvadersFile();
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   resetBlockedInvaders() {
-    this.antiInvasionService.resetBlockedInvaders();
+    this.amiService.resetBlockedInvaders();
   }
 
 }

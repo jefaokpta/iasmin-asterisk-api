@@ -9,9 +9,9 @@ export class PeerWriter {
 
     constructor(private readonly configService: ConfigService) {}
 
-    writePeers(users: UserDto[]) {
+    async writePeers(users: UserDto[]) {
         const content = users.map(user => this.generatePeerConfig(user)).join('\n');
-        writeFile(join(this.configService.get('ASTERISK_CONFIG')!, 'pjsip-peers.conf'), content);
+        await writeFile(join(this.configService.get('ASTERISK_CONFIG')!, 'pjsip-peers.conf'), content);
     }
 
     private generatePeerConfig(user: UserDto): string {

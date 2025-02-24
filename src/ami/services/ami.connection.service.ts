@@ -41,4 +41,8 @@ export class AmiConnectionService implements OnApplicationBootstrap {
     this.ami.on('invalidaccountid', (invalidAccountId: any) => this.antiInvasionService.antiInvasion(new Invader(invalidAccountId)));
   }
 
+  pjsipReload() {
+    this.ami.sendCommand('pjsip reload');
+  }
+
 }
