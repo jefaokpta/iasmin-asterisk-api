@@ -42,7 +42,16 @@ export class AmiConnectionService implements OnApplicationBootstrap {
   }
 
   pjsipReload() {
-    this.ami.sendCommand('pjsip reload');
+    try {
+      this.ami.action({
+        'Action': 'Command',
+        'Command': 'pjsip reload'
+      });
+      Logger.log('PJSIP recarregado com sucesso', 'AmiConnectionService');
+    } catch (error) {
+      Logger.error('Erro ao recarregar PJSIP', error, 'AmiConnectionService');
+      throw error;
+    }
   }
 
 }
