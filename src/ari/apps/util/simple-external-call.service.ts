@@ -4,10 +4,11 @@
  */
 import { Bridge, Channel, Client, StasisStart } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SimpleExternalCallService {
-  constructor() {}
+  constructor(private readonly configService: ConfigService) {}
 
   originateDialedChannel(ari: Client, channel: Channel) {
     channel.ring((err) => {if (err) throw err.message});
@@ -26,7 +27,7 @@ export class SimpleExternalCallService {
     })
 
     dialedChannel.originate({
-        endpoint: `PJSIP/101#${channel.dialplan.exten}@TWILLIO_JUPITER`,
+        endpoint: `PJSIP/101#${channel.dialplan.exten}@${this.configService.get('PABX_TRUNK')}`,
         timeout: 30,
         app: 'router-call-app',
         appArgs: 'dialed',
