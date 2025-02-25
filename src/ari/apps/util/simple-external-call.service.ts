@@ -27,13 +27,13 @@ export class SimpleExternalCallService {
     })
 
     dialedChannel.originate({
-        endpoint: `PJSIP/101#${channel.dialplan.exten}@${this.configService.get('PABX_TRUNK')}`,
+        endpoint: `PJSIP/${this.configService.get('PABX_TECH_PREFIX')}${channel.dialplan.exten}@${this.configService.get('PABX_TRUNK')}`,
         timeout: 30,
         app: 'router-call-app',
         appArgs: 'dialed',
         callerId: channel.dialplan.exten,
         variables: {
-          'PJSIP_HEADER(add,P-Asserted-Identity)': '100023',
+          'PJSIP_HEADER(add,P-Asserted-Identity)': this.configService.get('PABX_COMPANY_IDENTITY'),
         }},
       (err) => {if (err) {Logger.error(err.message, 'RouterCallAppService.OriginateDialedChannel')}},
     );
