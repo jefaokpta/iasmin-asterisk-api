@@ -22,6 +22,7 @@ export class CdrService {
   private readonly AUDIO_RECORD = this.configService.get('AUDIO_RECORD');
 
   async cdrCreated(cdr: Cdr) {
+    Logger.log(`CDR criado ${cdr.userfield}`, 'CdrService.cdrCreated');
     if (cdr.billableSeconds > 0) {
       this.convertAudioToMp3({ ...cdr, callRecord: this.createRecordFileName(cdr) });
       return

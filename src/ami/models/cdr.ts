@@ -16,6 +16,7 @@ export class Cdr {
   readonly startTime: string;
   readonly callRecord: string;
   readonly channel: string;
+  readonly userfield: string;
 
   constructor(cdr: any) {
     this.peer = cdr.peer
@@ -30,5 +31,6 @@ export class Cdr {
     this.startTime = cdr.starttime;
     this.callRecord = cdr.callrecord
     this.channel = cdr.channel
+    this.userfield = cdr.userfield
   }
 }
