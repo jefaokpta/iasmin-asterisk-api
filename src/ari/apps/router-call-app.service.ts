@@ -39,9 +39,10 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     );
   }
 
-  private stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
+  private async stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
     const company = stasisStartEvent.args[1];
-    Logger.log(`Ligacao de ${channel.name} ${channel.caller.name} para ${channel.dialplan.exten} Empresa ${company} ${channel.getChannelVar({variable: 'PJSIP_HEADERS(X-CALL-TOKEN)'})}`, 'RouterCallAppService');
+    const callToken = await channel.getChannelVar({variable: 'PJSIP_HEADERS(X-CALL-TOKEN)'});
+    Logger.log(`Ligacao de ${channel.name} ${channel.caller.name} para ${channel.dialplan.exten} Empresa ${company} - token ${callToken}`, 'RouterCallAppService');
     if (!company) return;
     if (channel.dialplan.exten === '12345') {
       externalMediaCall(ari, channel);
