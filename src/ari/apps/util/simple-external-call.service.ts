@@ -54,7 +54,7 @@ export class SimpleExternalCallService {
         Logger.log(`Bridge ${bridge.id} criada`, 'RouterCallAppService.createBridgeForChannels');
         this.addChannelsToBridge(channel, dialedChannel, bridge);
       })
-      .catch((err) => {if (err) throw err.message});
+      .catch((err) => {Logger.error('Erro ao criar bridge', err.message, 'RouterCallAppService.createBridgeForChannels')});
 
     bridge.record({
       name: 'nao_nomeia_a_gravacao',
