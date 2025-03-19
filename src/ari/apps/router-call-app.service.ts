@@ -41,7 +41,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
   private async stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
     if (stasisStartEvent.args.includes('dialed')) {
-      Logger.log(`Chamada originada pelo dialer ${stasisStartEvent.args}`, 'RouterCallAppService');
+      Logger.log(`Chamada originada atendida ${channel.name}`, 'RouterCallAppService');
       return;
     }
     try {
@@ -71,8 +71,9 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       }
       
       this.simpleExternalCallService.originateDialedChannel(ari, channel);
+
     } catch (error) {
-      Logger.error(`Erro ao processar StasisStart: ${error.message}`, 'RouterCallAppService');
+      Logger.error(`Erro ao processar inicio da chamada: ${error.message}`, 'RouterCallAppService');
     }
   }
 
