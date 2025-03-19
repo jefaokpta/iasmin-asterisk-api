@@ -40,21 +40,41 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   }
 
   private async stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
-    const companyVar = await channel.getChannelVar({variable: 'CDR(company)'});
-    const company = companyVar.value;
-    const callTokenVar = await channel.getChannelVar({variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)'});
-    const callToken = callTokenVar.value;
-    Logger.log(`Ligacao de ${channel.name} ${channel.caller.name} para ${channel.dialplan.exten} Empresa ${company} - token ${callToken}`, 'RouterCallAppService');
-    if (!company) return;
-    if (channel.dialplan.exten === '12345') {
-      externalMediaCall(ari, channel);
-      return;
+    try {
+      const companyVar = await channel.getChannelVar({variable: 'CDR(company)'});
+      const company = companyVar.value;
+
+      let callToken = '';
+      try {
+        const callTokenVar = await channel.getChannelVar({variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)'});
+        callToken = callTokenVar.value;
+      } catch (error) {
+        Logger.warn(`Não foi possível obter X-CALL-TOKEN: ${error.message}`, 'RouterCallAppService');
+      }
+
+      Logger.log(`Ligacao de ${channel.name} ${channel.caller.name} para ${channel.dialplan.exten} Empresa ${company} - token ${callToken}`, 'RouterCallAppService');
+      
+      if (!company) return;
+      
+      if (channel.dialplan.exten === '12345') {
+        externalMediaCall(ari, channel);
+        return;
+      }
+      
+      if (channel.dialplan.exten.length < 8) {
+        this.simpleInternalCallService.originateDialedChannel(ari, channel);
+        return;
+      }
+      
+      this.simpleExternalCallService.originateDialedChannel(ari, channel);
+    } catch (error) {
+      Logger.error(`Erro ao processar StasisStart: ${error.message}`, 'RouterCallAppService');
+      try {
+        channel.hangup().catch(err => Logger.error(`Falha ao desligar canal: ${err.message}`, 'RouterCallAppService'));
+      } catch (hangupError) {
+        Logger.error(`Exceção ao tentar desligar canal: ${hangupError.message}`, 'RouterCallAppService');
+      }
     }
-    if (channel.dialplan.exten.length < 8) {
-      this.simpleInternalCallService.originateDialedChannel(ari, channel);
-      return;
-    }
-    this.simpleExternalCallService.originateDialedChannel(ari, channel);
   }
 
 }
