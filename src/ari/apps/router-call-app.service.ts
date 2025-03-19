@@ -41,7 +41,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
   private async stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
     const company = stasisStartEvent.args[1];
-    const callToken = await channel.getChannelVar({variable: 'PJSIP_HEADERS(X-CALL-TOKEN)'});
+    const callToken = await channel.getChannelVar({variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)'});
     Logger.log(`Ligacao de ${channel.name} ${channel.caller.name} para ${channel.dialplan.exten} Empresa ${company} - token ${callToken}`, 'RouterCallAppService');
     if (!company) return;
     if (channel.dialplan.exten === '12345') {
