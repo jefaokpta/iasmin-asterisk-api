@@ -17,10 +17,10 @@ export class InternalCallService {
       this.originalChannelHangup(channel, dialedChannel);
     })
 
-    dialedChannel.on('ChannelDestroyed', (event, dialedChannel) => {
-      console.log('ChannelDestroyed', event, dialedChannel); //TODO: Remover
-      this.dialedChannelHangup(channel);
-    })
+    // dialedChannel.on('ChannelDestroyed', (event, dialedChannel) => {
+    //   console.log('ChannelDestroyed', event, dialedChannel); //TODO: Remover
+    //   this.dialedChannelHangup(channel);
+    // })
 
     dialedChannel.on('StasisStart', (stasisStartEvent: StasisStart, dialedChannel: Channel) => {
       this.createBridgeForChannels(ari, channel, dialedChannel);
