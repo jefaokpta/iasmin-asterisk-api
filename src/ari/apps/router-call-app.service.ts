@@ -7,15 +7,15 @@ import { Channel, Client, connect, StasisStart } from 'ari-client';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { externalMediaCall } from './util/external-media-call';
-import { SimpleExternalCallService } from './util/simple-external-call.service';
-import { SimpleInternalCallService } from './util/simple-internal-call.service';
+import { ExternalCallService } from './util/external-call.service';
+import { InternalCallService } from './util/internal-call.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
   constructor(
     private readonly configService: ConfigService,
-    private readonly simpleExternalCallService: SimpleExternalCallService,
-    private readonly simpleInternalCallService: SimpleInternalCallService
+    private readonly simpleExternalCallService: ExternalCallService,
+    private readonly simpleInternalCallService: InternalCallService
   ) {}
 
   onApplicationBootstrap() {

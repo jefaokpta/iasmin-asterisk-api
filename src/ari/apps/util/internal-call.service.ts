@@ -4,11 +4,10 @@
  */
 import { Bridge, Channel, Client, StasisStart } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class SimpleExternalCallService {
-  constructor(private readonly configService: ConfigService) {}
+export class InternalCallService {
+  constructor() {}
 
   originateDialedChannel(ari: Client, channel: Channel) {
     channel.ring((err) => {if (err) throw err.message});
@@ -19,7 +18,8 @@ export class SimpleExternalCallService {
     })
 
     dialedChannel.on('ChannelDestroyed', (event, dialedChannel) => {
-      this.dialedChannelHangup(channel, dialedChannel);
+      console.log('ChannelDestroyed', event, dialedChannel); //TODO: Remover
+      this.dialedChannelHangup(channel);
     })
 
     dialedChannel.on('StasisStart', (stasisStartEvent: StasisStart, dialedChannel: Channel) => {
@@ -27,16 +27,15 @@ export class SimpleExternalCallService {
     })
 
     dialedChannel.originate({
-        endpoint: `PJSIP/${this.configService.get('PABX_TECH_PREFIX')}${channel.dialplan.exten}@${this.configService.get('PABX_TRUNK')}`,
+        endpoint: `PJSIP/${channel.dialplan.exten}`,
         timeout: 30,
         app: 'router-call-app',
         appArgs: 'dialed',
-        callerId: channel.dialplan.exten,
-        variables: {
-          'PJSIP_HEADER(add,P-Asserted-Identity)': this.configService.get('PABX_COMPANY_IDENTITY'),
-        }},
-      (err) => {if (err) {Logger.error(err.message, 'RouterCallAppService.OriginateDialedChannel')}},
-    );
+        callerId: channel.caller.number,
+    }).catch((err) => {
+      Logger.error('Erro ao originar chamada', err.message, 'InternalCallService.originateDialedChannel')
+      channel.hangup()
+    });
   }
 
   private async createBridgeForChannels(ari: Client, channel: Channel, dialedChannel: Channel) {
@@ -51,10 +50,10 @@ export class SimpleExternalCallService {
 
     await bridge.create({type: 'mixing'})
       .then((bridge) => {
-        Logger.log(`Bridge ${bridge.id} criada`, 'RouterCallAppService.createBridgeForChannels');
+        Logger.log(`Bridge ${bridge.id} criada`, 'InternalCallService.createBridgeForChannels');
         this.addChannelsToBridge(channel, dialedChannel, bridge);
       })
-      .catch((err) => {Logger.error('Erro ao criar bridge', err.message, 'RouterCallAppService.createBridgeForChannels')});
+      .catch((err) => {if (err) throw err.message});
 
     bridge.record({
       name: 'nao_nomeia_a_gravacao',
@@ -66,26 +65,23 @@ export class SimpleExternalCallService {
   private addChannelsToBridge(channel: Channel, dialedChannel: Channel, bridge: Bridge) {
     bridge.addChannel({channel: [channel.id, dialedChannel.id]}, (err) => {
       if (err) throw err.message;
-      Logger.log(`Canais ${channel.id} e ${dialedChannel.id} adicionados à bridge ${bridge.id}`, 'RouterCallAppService.addChannelsToBridge');
+      Logger.log(`Canais ${channel.id} e ${dialedChannel.id} adicionados à bridge ${bridge.id}`, 'InternalCallService.addChannelsToBridge');
     });
   }
 
   private originalChannelHangup(channel: Channel, dialedChannel: Channel) {
-    Logger.log(`Canal ${channel.name} desligou, desligando ${dialedChannel.name}`, 'RouterCallAppService.originalChannelHangup')
     dialedChannel.hangup()
-      .catch((err) => Logger.error('Canal Original desligado', err.message, 'RouterCallAppService'));
+      .catch((err) => Logger.error(`Canal B ${dialedChannel.name} ja foi desligado`, err.message, 'InternalCallService'));
   }
 
-  private dialedChannelHangup(channel: Channel, dialedChannel: Channel) {
-    Logger.log(`Canal ${dialedChannel.name} desligou, desligando ${channel.name}`, 'RouterCallAppService.dialedChannelHangup')
+  private dialedChannelHangup(channel: Channel) {
     channel.hangup()
-      .catch((err) => Logger.error('Canal Discado desligado', err.message, 'RouterCallAppService'));
+      .catch((err) => Logger.error(`Canal A ${channel.name} ja foi desligado`, err.message, 'InternalCallService'));
   }
 
   private bridgeDestroy(bridge: Bridge, dialedChannel: Channel) {
-    Logger.log(`Canal discado ${dialedChannel.name} desligou, Bridge ${bridge.id} será destruída`, 'RouterCallAppService.bridgeDestroy');
     bridge.destroy()
-      .catch((err) => Logger.error(`Bridge do canal ${dialedChannel.name} destruída`, err.message, 'RouterCallAppService'));
+      .catch((err) => Logger.error(`Bridge do canal ${dialedChannel.name} destruída`, err.message, 'InternalCallService'));
   }
 
 }
