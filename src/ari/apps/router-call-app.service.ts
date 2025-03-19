@@ -40,6 +40,10 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   }
 
   private async stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
+    if (stasisStartEvent.args.includes('dialed')) {
+      Logger.log(`Chamada originada pelo dialer ${stasisStartEvent.args}`, 'RouterCallAppService');
+      return;
+    }
     try {
       const companyVar = await channel.getChannelVar({variable: 'CDR(company)'});
       const company = companyVar.value;
@@ -69,11 +73,6 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       this.simpleExternalCallService.originateDialedChannel(ari, channel);
     } catch (error) {
       Logger.error(`Erro ao processar StasisStart: ${error.message}`, 'RouterCallAppService');
-      try {
-        channel.hangup().catch(err => Logger.error(`Falha ao desligar canal: ${err.message}`, 'RouterCallAppService'));
-      } catch (hangupError) {
-        Logger.error(`Exceção ao tentar desligar canal: ${hangupError.message}`, 'RouterCallAppService');
-      }
     }
   }
 
