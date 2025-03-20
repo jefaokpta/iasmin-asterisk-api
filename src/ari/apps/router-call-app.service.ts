@@ -33,20 +33,10 @@ export class RouterCallAppService implements OnApplicationBootstrap {
           .catch((err) => Logger.error(`💣️ Erro ao iniciar app router-call-app ${err.message}`, 'RouterCallAppService'));
       }
     );
-
-    // TODO: tentar subir outro app ari
-    // connect(
-    //   this.configService.get('ARI_HOST')!,
-    //   this.configService.get('ARI_USER')!,
-    //   this.configService.get('ARI_PASS')!,
-    //   (error, ari) => {
-    //     if (error) Logger.error(`💣️ Erro ao conectar ao Asterisk ${error.message}`, 'RouterCallAppService');
-    //   }
-    // );
   }
 
-  private async stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
-    if (stasisStartEvent.args.includes('dialed')) {
+  private async stasisStart(event: StasisStart, channel: Channel, ari: Client) {
+    if (event.args.includes('dialed')) {
       Logger.log(`Canal ${channel.name} atendeu a chamada de ${channel.caller.name}`, 'RouterCallAppService');
       return;
     }

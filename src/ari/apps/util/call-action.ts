@@ -49,8 +49,10 @@ export class CallAction {
             format: 'sln',
         }, ari.LiveRecording(channelA.id.replace('.', '-')))
             .catch((err) => Logger.error('Erro ao gravar chamada', err.message, 'CallAction.createBridgeForChannels'));
+
+        return bridge;
     }
-    
+
     private bridgeDestroy(bridge: Bridge, channel: Channel) {
         bridge.destroy()
             .catch((err) => Logger.error(`Erro ao destruir bridge do canal ${channel.name} ${err.message}`, 'CallAction.bridgeDestroy'));
