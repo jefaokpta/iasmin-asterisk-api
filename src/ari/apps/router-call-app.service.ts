@@ -6,16 +6,16 @@
 import { Channel, Client, connect, StasisStart } from 'ari-client';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { externalMediaCall } from './util/external-media-call';
-import { ExternalCallService } from './util/external-call.service';
-import { InternalCallService } from './util/internal-call.service';
+import { externalMediaCall } from './external-media-call';
+import { ExternalCallService } from './external-call.service';
+import { InternalCallService } from './internal-call.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
   constructor(
     private readonly configService: ConfigService,
-    private readonly simpleExternalCallService: ExternalCallService,
-    private readonly simpleInternalCallService: InternalCallService
+    private readonly externalCallService: ExternalCallService,
+    private readonly internalCallService: InternalCallService
   ) {}
 
   onApplicationBootstrap() {
@@ -24,24 +24,30 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       this.configService.get('ARI_USER')!,
       this.configService.get('ARI_PASS')!,
       (error, ari) => {
-        if (error) throw error.message;
+        if (error) Logger.error(`💣️ Erro ao conectar ao Asterisk ${error.message}`, 'RouterCallAppService');
         ari.on('StasisStart', (stasisStartEvent: StasisStart, channel: Channel) => {
           this.stasisStart(stasisStartEvent, channel, ari);
         })
         ari.start('router-call-app')
-          .then(() =>
-            Logger.log(
-              'Roteador de chamadas: router-call-app 🚀',
-              'RouterCallAppService',
-            ),
-          );
+          .then(() => Logger.log('Roteador de chamadas: router-call-app 🚀', 'RouterCallAppService'))
+          .catch((err) => Logger.error(`💣️ Erro ao iniciar app router-call-app ${err.message}`, 'RouterCallAppService'));
       }
     );
+
+    // TODO: tentar subir outro app ari
+    // connect(
+    //   this.configService.get('ARI_HOST')!,
+    //   this.configService.get('ARI_USER')!,
+    //   this.configService.get('ARI_PASS')!,
+    //   (error, ari) => {
+    //     if (error) Logger.error(`💣️ Erro ao conectar ao Asterisk ${error.message}`, 'RouterCallAppService');
+    //   }
+    // );
   }
 
   private async stasisStart(stasisStartEvent: StasisStart, channel: Channel, ari: Client) {
     if (stasisStartEvent.args.includes('dialed')) {
-      Logger.log(`Chamada originada atendida ${channel.name}`, 'RouterCallAppService');
+      Logger.log(`Canal ${channel.name} atendeu a chamada de ${channel.caller.name}`, 'RouterCallAppService');
       return;
     }
     try {
@@ -66,11 +72,11 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       }
       
       if (channel.dialplan.exten.length < 8) {
-        this.simpleInternalCallService.originateDialedChannel(ari, channel);
+        this.internalCallService.originateInternalCall(ari, channel);
         return;
       }
       
-      this.simpleExternalCallService.originateDialedChannel(ari, channel);
+      this.externalCallService.originateExternalCall(ari, channel);
 
     } catch (error) {
       Logger.error(`Erro ao processar inicio da chamada: ${error.message}`, 'RouterCallAppService');
