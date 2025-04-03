@@ -9,6 +9,7 @@ import { PeerModule } from './peer/peer.module';
 import { HttpClientModule } from './http-client/http-client.module';
 import { CacheControlModule } from './cache-control/cache-control.module';
 import { SecurityModule } from './security/security.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { SecurityModule } from './security/security.module';
     CacheControlModule,
     HttpClientModule,
     SecurityModule,
+    CompaniesModule,
   ],
 })
 export class AppModule {}

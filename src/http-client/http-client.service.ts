@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { Company } from '../models/company';
+import { Company } from '../companies/models/company';
 import { SecurityService } from '../security/security.service';
 
 @Injectable()
