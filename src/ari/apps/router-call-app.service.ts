@@ -53,6 +53,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       },
     );
 
+    this.logger.log('Carregando empresas...');
     this.cacheControlService.loadCompanies(
       await this.httpClientService.getCompanies(),
     );
