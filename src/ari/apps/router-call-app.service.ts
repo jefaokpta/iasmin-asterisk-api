@@ -10,6 +10,7 @@ import { externalMediaCall } from './external-media-call';
 import { ExternalCallService } from './external-call.service';
 import { InternalCallService } from './internal-call.service';
 import { HttpClientService } from '../../http-client/http-client.service';
+import { CacheControlService } from '../../cache-control/cache-control.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
@@ -18,11 +19,12 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     private readonly externalCallService: ExternalCallService,
     private readonly internalCallService: InternalCallService,
     private readonly httpClientService: HttpClientService,
+    private readonly cacheControlService: CacheControlService,
   ) {}
 
   private readonly logger = new Logger(RouterCallAppService.name);
 
-  onApplicationBootstrap() {
+  async onApplicationBootstrap() {
     connect(
       this.configService.get('ARI_HOST')!,
       this.configService.get('ARI_USER')!,
@@ -51,7 +53,9 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       },
     );
 
-    this.httpClientService.getCompanies();
+    this.cacheControlService.loadCompanies(
+      await this.httpClientService.getCompanies(),
+    );
   }
 
   private async stasisStart(event: StasisStart, channel: Channel, ari: Client) {

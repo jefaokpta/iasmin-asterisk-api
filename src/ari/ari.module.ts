@@ -4,9 +4,10 @@ import { ExternalCallService } from './apps/external-call.service';
 import { InternalCallService } from './apps/internal-call.service';
 import { CallAction } from './apps/util/call-action';
 import { HttpClientModule } from '../http-client/http-client.module';
+import { CacheControlModule } from '../cache-control/cache-control.module';
 
 @Module({
-  imports: [HttpClientModule],
+  imports: [HttpClientModule, CacheControlModule],
   providers: [
     RouterCallAppService,
     ExternalCallService,
