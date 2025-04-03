@@ -8,6 +8,7 @@ import { UploadModule } from './upload/upload.module';
 import { PeerModule } from './peer/peer.module';
 import { HttpClientModule } from './http-client/http-client.module';
 import { CacheControlModule } from './cache-control/cache-control.module';
+import { SecurityModule } from './security/security.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CacheControlModule } from './cache-control/cache-control.module';
     PeerModule,
     CacheControlModule,
     HttpClientModule,
+    SecurityModule,
   ],
 })
 export class AppModule {}

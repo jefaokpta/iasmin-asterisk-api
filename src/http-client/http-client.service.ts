@@ -16,7 +16,7 @@ export class HttpClientService {
       const response = await axios.get(`${this.BACKEND_API}/companies`, {
         timeout: this.HTTP_REQUEST_TIMEOUT,
       });
-      console.log(
+      this.logger.debug(
         `GET ${this.BACKEND_API}/companies - ${response.status} - ${response.statusText}`,
       ); //TODO: remove
       return response.data;
