@@ -99,7 +99,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
         return;
       }
 
-      this.externalCallService.originateExternalCall(ari, channel);
+      this.externalCallService.originateExternalCall(ari, channel, company);
     } catch (error) {
       this.logger.error(
         `Erro ao processar inicio da chamada: ${error.message}`,

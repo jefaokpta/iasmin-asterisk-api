@@ -11,12 +11,12 @@ export class CacheControlService {
 
   loadCompanies(companies: Company[]) {
     companies.forEach((c) =>
-      this.cacheManager.set(c.controlNumber.toString(), c.phone),
+      this.cacheManager.set(c.controlNumber.toString(), c.phone.toString()),
     );
   }
 
-  async getCompanyPhone(controlNumber: string): Promise<number | undefined> {
-    const n = await this.cacheManager.get<number>(controlNumber);
+  async getCompanyPhone(controlNumber: string): Promise<string | undefined> {
+    const n = await this.cacheManager.get<string>(controlNumber);
     if (n) return n;
     return undefined;
   }
