@@ -5,6 +5,7 @@
 import { Channel, Client, StasisStart } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
 import { CallAction } from './util/call-action';
+import { ChannelLeg } from './util/enus/channel-leg.enum';
 
 @Injectable()
 export class InternalCallService {
@@ -12,29 +13,33 @@ export class InternalCallService {
 
   private readonly logger = new Logger(InternalCallService.name);
 
-  originateInternalCall(ari: Client, channelA: Channel) {
+  async originateInternalCall(ari: Client, channelA: Channel) {
     this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
 
-    channelA.on('StasisEnd', (event, channelA) => {
-      this.callAction.stasisEndChannelA(channelA, channelB);
+    channelA.on('StasisEnd', (event, channel) => {
+      this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
+      this.callAction.hangupChannel(channelB);
     });
 
-    channelB.on(
-      'StasisStart',
-      async (event: StasisStart, channelB: Channel) => {
-        clearTimeout(dialTimeout);
-        const bridge = await this.callAction.createBridgeForChannels(
-          ari,
-          channelA,
-          channelB
-        );
-        channelB.on('StasisEnd', (event, channelB) => {
-          this.callAction.stasisEndChannelB(channelA, channelB, bridge);
-        });
-      }
-    );
+    const snoopChannel = await this.callAction.createSnoopChannel(channelA);
+    snoopChannel.on('StasisStart', (event, snoop) => {
+      this.callAction.recordChannel(snoop, ari, ChannelLeg.A);
+    });
+
+    channelB.on('StasisStart', async (event: StasisStart, channel: Channel) => {
+      clearTimeout(dialTimeout);
+      this.callAction.answerChannel(channelA);
+      const bridgeMain = await this.callAction.createBridge(ari);
+      channel.on('StasisEnd', (event, c) => {
+        this.logger.log(`Canal B ${c.name} finalizou a chamada`);
+        this.callAction.hangupChannel(channelA);
+        this.callAction.bridgeDestroy(bridgeMain);
+      });
+      this.callAction.addChannesToBridge(bridgeMain, [channelA, channel]);
+      this.callAction.recordBridge(bridgeMain, ari, channelA, ChannelLeg.MAIN);
+    });
 
     channelB
       .originate({
@@ -43,7 +48,7 @@ export class InternalCallService {
         appArgs: 'dialed',
         callerId: channelA.caller.number,
       })
-      .catch((err) => {
+      .catch(err => {
         this.logger.error('Erro ao originar chamada', err.message);
         this.callAction.hangupChannel(channelA);
       });

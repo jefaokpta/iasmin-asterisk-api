@@ -30,40 +30,24 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       this.configService.get('ARI_USER')!,
       this.configService.get('ARI_PASS')!,
       (error, ari) => {
-        if (error)
-          this.logger.error(
-            `💣️ Erro ao conectar ao Asterisk ${error.message}`,
-          );
-        ari.on(
-          'StasisStart',
-          (stasisStartEvent: StasisStart, channel: Channel) => {
-            this.stasisStart(stasisStartEvent, channel, ari);
-          },
-        );
+        if (error) this.logger.error(`💣️ Erro ao conectar ao Asterisk ${error.message}`);
+        ari.on('StasisStart', (stasisStartEvent: StasisStart, channel: Channel) => {
+          this.stasisStart(stasisStartEvent, channel, ari);
+        });
         ari
           .start('router-call-app')
-          .then(() =>
-            this.logger.log('Roteador de chamadas: router-call-app 🚀'),
-          )
-          .catch((err) =>
-            this.logger.error(
-              `💣️ Erro ao iniciar app router-call-app ${err.message}`,
-            ),
-          );
+          .then(() => this.logger.log('Roteador de chamadas: router-call-app 🚀'))
+          .catch(err => this.logger.error(`💣️ Erro ao iniciar app router-call-app ${err.message}`));
       },
     );
 
     this.logger.log('Carregando empresas...');
-    this.cacheControlService.loadCompanies(
-      await this.httpClientService.getCompanies(),
-    );
+    this.cacheControlService.loadCompanies(await this.httpClientService.getCompanies());
   }
 
   private async stasisStart(event: StasisStart, channel: Channel, ari: Client) {
     if (event.args.includes('dialed')) {
-      this.logger.log(
-        `Canal ${channel.name} atendeu a chamada de ${channel.caller.name}`,
-      );
+      this.logger.log(`Canal ${channel.name} atendeu a chamada de ${channel.caller.name}`);
       return;
     }
     try {
@@ -79,9 +63,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
         });
         callToken = callTokenVar.value;
       } catch (error) {
-        this.logger.warn(
-          `Não foi possível obter X-CALL-TOKEN: ${error.message}`,
-        );
+        this.logger.warn(`Não foi possível obter X-CALL-TOKEN: ${error.message}`);
       }
 
       this.logger.log(
@@ -102,9 +84,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
       this.externalCallService.originateExternalCall(ari, channel, company);
     } catch (error) {
-      this.logger.error(
-        `Erro ao processar inicio da chamada: ${error.message}`,
-      );
+      this.logger.error(`Erro ao processar inicio da chamada: ${error.message}`);
     }
   }
 }

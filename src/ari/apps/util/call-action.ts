@@ -7,118 +7,84 @@ export class CallAction {
   private readonly logger = new Logger(CallAction.name);
 
   answerChannel(channel: Channel) {
-    channel
-      .answer()
-      .catch((err) =>
-        this.logger.error(
-          `Erro ao atender canal ${channel.name} ${err.message}`
-        )
-      );
+    channel.answer().catch(err => this.logger.error(`Erro ao atender canal ${channel.name} ${err.message}`));
   }
 
   ringChannel(channel: Channel) {
-    channel
-      .ring()
-      .catch((err) =>
-        this.logger.error(
-          `Erro ao iniciar ring do canal ${channel.name} ${err.message}`
-        )
-      );
+    channel.ring().catch(err => this.logger.error(`Erro ao iniciar ring do canal ${channel.name} ${err.message}`));
   }
 
   hangupChannel(channel: Channel) {
-    channel
-      .hangup()
-      .catch((err) =>
-        this.logger.error(
-          `Erro ao desligar canal ${channel.name} ${err.message}`
-        )
-      );
+    channel.hangup().catch(err => this.logger.error(`Erro ao desligar canal ${channel.name} ${err.message}`));
   }
 
-  stasisEndChannelA(channelA: Channel, channelB: Channel) {
-    this.logger.log(`Canal A ${channelA.name} finalizou a chamada`);
-    this.hangupChannel(channelB);
-  }
+  // stasisEndChannelA(channelA: Channel, channelB: Channel) {
+  //   this.logger.log(`Canal A ${channelA.name} finalizou a chamada`);
+  //   this.hangupChannel(channelB);
+  // }
 
-  stasisEndChannelB(channelA: Channel, channelB: Channel, bridge: Bridge) {
-    this.logger.log(`Canal B ${channelB.name} finalizou a chamada`);
-    this.hangupChannel(channelA);
-    this.bridgeDestroy(bridge, channelB);
-  }
+  // stasisEndChannelB(channelA: Channel, channelB: Channel, bridge: Bridge) {
+  //   this.logger.log(`Canal B ${channelB.name} finalizou a chamada`);
+  //   this.hangupChannel(channelA);
+  //   this.bridgeDestroy(bridge, channelB);
+  // }
 
-  async createBridgeForChannels(
-    ari: Client,
-    channelA: Channel,
-    channelB: Channel
-  ) {
+  async createBridge(ari: Client) {
     const bridge = ari.Bridge();
-    this.answerChannel(channelA);
-    await bridge.create({ type: 'mixing' }).catch((err) => {
+    await bridge.create({ type: 'mixing' }).catch(err => {
       this.logger.error('Erro ao criar bridge', err.message);
     });
-    this.addChannelsToBridge(channelA, channelB, bridge);
     return bridge;
   }
 
   dialTimeout(channel: Channel, timeout: number = 30000) {
     return setTimeout(() => {
-      this.logger.warn(
-        `Timeout de ${timeout}ms para canal ${channel.name} atendere a chamada`
-      );
+      this.logger.warn(`Timeout de ${timeout}ms para canal ${channel.name} atendere a chamada`);
       this.hangupChannel(channel);
     }, timeout);
   }
 
-  private recordBridge(bridge: Bridge, ari: Client, channelA: Channel) {
-    const recordingName = channelA.id.replace('.', '-');
+  recordBridge(bridge: Bridge, ari: Client, channel: Channel, channelLeg: ChannelLeg) {
+    this.logger.log(`Gravando ponte mixed do canal ${channel.name} - ${channelLeg}`);
+    const recordingName = `${channel.id.replace('.', '-')}-${channelLeg}`;
     bridge
-      .record(
-        { name: recordingName, format: 'sln' },
-        ari.LiveRecording(recordingName)
-      )
-      .catch((err) => this.logger.error('Erro ao gravar chamada', err.message));
+      .record({ name: recordingName, format: 'sln' }, ari.LiveRecording(recordingName))
+      .catch(err => this.logger.error('Erro ao gravar chamada', err.message));
   }
 
-  private async recordChannel(
-    channel: Channel,
-    ari: Client,
-    channelLeg: ChannelLeg
-  ) {
+  async recordChannel(channel: Channel, ari: Client, channelLeg: ChannelLeg) {
     const recordingName = `${channel.id.replace('.', '-')}-${channelLeg}`;
     await channel
-      .record(
-        { name: recordingName, format: 'sln' },
-        ari.LiveRecording(recordingName)
+      .record({ name: recordingName, format: 'sln' }, ari.LiveRecording(recordingName))
+      .catch(err => this.logger.error(`Erro ao gravar canal ${channel.name}`, err.message));
+  }
+
+  bridgeDestroy(bridge: Bridge) {
+    bridge.destroy().catch(err => this.logger.error(`Erro ao destruir bridge ${bridge.id}`, err.message));
+  }
+
+  addChannesToBridge(bridge: Bridge, channels: Channel[]) {
+    bridge
+      .addChannel({ channel: channels.map(c => c.id) })
+      .catch(err =>
+        this.logger.error(`Erro ao adicionar canais ${channels[0].name} à bridge ${bridge.id}`, err.message),
+      );
+  }
+
+  async createSnoopChannel(targetChannel: Channel) {
+    console.log(targetChannel);
+    return await targetChannel
+      .snoopChannel(
+        {
+          app: 'router-call-app',
+          appArgs: 'dialed',
+          spy: 'in', // Options: 'in', 'out', 'both'
+          whisper: 'none', // Options: 'none', 'out', 'both'
+        },
+        targetChannel,
       )
-      .catch((err) =>
-        this.logger.error(`Erro ao gravar canal ${channel.name}`, err.message)
-      );
-  }
-
-  private bridgeDestroy(bridge: Bridge, channel: Channel) {
-    bridge
-      .destroy()
-      .catch((err) =>
-        this.logger.error(
-          `Erro ao destruir bridge do canal ${channel.name}`,
-          err.message
-        )
-      );
-  }
-
-  private addChannelsToBridge(
-    channelA: Channel,
-    channelB: Channel,
-    bridge: Bridge
-  ) {
-    bridge
-      .addChannel({ channel: [channelA.id, channelB.id] })
-      .catch((err) =>
-        this.logger.error(
-          `Erro ao adicionar canais ${channelA.name} e ${channelB.name} à bridge ${bridge.id}`,
-          err.message
-        )
-      );
+      .catch(err => {
+        throw Error(`Erro ao criar canal snoop ${err.message}`);
+      });
   }
 }

@@ -13,7 +13,7 @@ export class ExternalCallService {
   constructor(
     private readonly configService: ConfigService,
     private readonly callAction: CallAction,
-    private readonly cacheControlService: CacheControlService
+    private readonly cacheControlService: CacheControlService,
   ) {}
 
   private readonly logger = new Logger(ExternalCallService.name);
@@ -23,13 +23,20 @@ export class ExternalCallService {
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
 
-    channelA.on('StasisEnd', (event, channelA) => {
-      this.callAction.stasisEndChannelA(channelA, channelB);
+    channelA.on('StasisEnd', (event, channel) => {
+      this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
+      this.callAction.hangupChannel(channelB);
     });
 
-    channelB.on('StasisStart', (event: StasisStart, channelB: Channel) => {
+    channelB.on('StasisStart', async (event: StasisStart, channel: Channel) => {
       clearTimeout(dialTimeout);
-      this.callAction.createBridgeForChannels(ari, channelA, channelB);
+      this.callAction.answerChannel(channelA);
+      const bridge = await this.callAction.createBridge(ari);
+      channel.on('StasisEnd', (event, c) => {
+        this.logger.log(`Canal B ${c.name} finalizou a chamada`);
+        this.callAction.hangupChannel(channelA);
+        this.callAction.bridgeDestroy(bridge);
+      });
     });
 
     const callerId = await this.cacheControlService.getCompanyPhone(company);
@@ -57,15 +64,12 @@ export class ExternalCallService {
           'PJSIP_HEADER(add,P-Asserted-Identity)': company,
         },
       },
-      (err) => {
+      err => {
         if (err) {
-          this.logger.error(
-            `Erro ao originar channel B ${trunkName}`,
-            err.message
-          );
+          this.logger.error(`Erro ao originar channel B ${trunkName}`, err.message);
           this.callAction.hangupChannel(channelA);
         }
-      }
+      },
     );
   }
 }

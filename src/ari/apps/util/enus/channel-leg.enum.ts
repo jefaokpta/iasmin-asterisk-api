@@ -5,6 +5,7 @@
  */
 
 export enum ChannelLeg {
-  A = 'A',
-  B = 'B',
+  A = 'a',
+  B = 'b',
+  MAIN = 'main'
 }
