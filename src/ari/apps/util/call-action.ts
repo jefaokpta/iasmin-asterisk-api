@@ -11,8 +11,8 @@ export class CallAction {
       .answer()
       .catch((err) =>
         this.logger.error(
-          `Erro ao atender canal ${channel.name} ${err.message}`,
-        ),
+          `Erro ao atender canal ${channel.name} ${err.message}`
+        )
       );
   }
 
@@ -21,8 +21,8 @@ export class CallAction {
       .ring()
       .catch((err) =>
         this.logger.error(
-          `Erro ao iniciar ring do canal ${channel.name} ${err.message}`,
-        ),
+          `Erro ao iniciar ring do canal ${channel.name} ${err.message}`
+        )
       );
   }
 
@@ -31,8 +31,8 @@ export class CallAction {
       .hangup()
       .catch((err) =>
         this.logger.error(
-          `Erro ao desligar canal ${channel.name} ${err.message}`,
-        ),
+          `Erro ao desligar canal ${channel.name} ${err.message}`
+        )
       );
   }
 
@@ -50,25 +50,24 @@ export class CallAction {
   async createBridgeForChannels(
     ari: Client,
     channelA: Channel,
-    channelB: Channel,
+    channelB: Channel
   ) {
     const bridge = ari.Bridge();
-
     this.answerChannel(channelA);
-
-    channelB.on('StasisEnd', (event, channelB) => {
-      this.stasisEndChannelB(channelA, channelB, bridge);
-    });
-
     await bridge.create({ type: 'mixing' }).catch((err) => {
       this.logger.error('Erro ao criar bridge', err.message);
     });
-
     this.addChannelsToBridge(channelA, channelB, bridge);
-    this.recordBridge(bridge, ari, channelA);
-    this.recordChannel(channelA, ari, ChannelLeg.A);
-    this.recordChannel(channelB, ari, ChannelLeg.B);
     return bridge;
+  }
+
+  dialTimeout(channel: Channel, timeout: number = 30000) {
+    return setTimeout(() => {
+      this.logger.warn(
+        `Timeout de ${timeout}ms para canal ${channel.name} atendere a chamada`
+      );
+      this.hangupChannel(channel);
+    }, timeout);
   }
 
   private recordBridge(bridge: Bridge, ari: Client, channelA: Channel) {
@@ -76,20 +75,24 @@ export class CallAction {
     bridge
       .record(
         { name: recordingName, format: 'sln' },
-        ari.LiveRecording(recordingName),
+        ari.LiveRecording(recordingName)
       )
       .catch((err) => this.logger.error('Erro ao gravar chamada', err.message));
   }
 
-  private recordChannel(channel: Channel, ari: Client, channelLeg: ChannelLeg) {
+  private async recordChannel(
+    channel: Channel,
+    ari: Client,
+    channelLeg: ChannelLeg
+  ) {
     const recordingName = `${channel.id.replace('.', '-')}-${channelLeg}`;
-    channel
+    await channel
       .record(
         { name: recordingName, format: 'sln' },
-        ari.LiveRecording(recordingName),
+        ari.LiveRecording(recordingName)
       )
       .catch((err) =>
-        this.logger.error(`Erro ao gravar canal ${channel.name}`, err.message),
+        this.logger.error(`Erro ao gravar canal ${channel.name}`, err.message)
       );
   }
 
@@ -98,23 +101,24 @@ export class CallAction {
       .destroy()
       .catch((err) =>
         this.logger.error(
-          `Erro ao destruir bridge do canal ${channel.name} ${err.message}`,
-        ),
+          `Erro ao destruir bridge do canal ${channel.name}`,
+          err.message
+        )
       );
   }
 
   private addChannelsToBridge(
     channelA: Channel,
     channelB: Channel,
-    bridge: Bridge,
+    bridge: Bridge
   ) {
     bridge
       .addChannel({ channel: [channelA.id, channelB.id] })
       .catch((err) =>
         this.logger.error(
           `Erro ao adicionar canais ${channelA.name} e ${channelB.name} à bridge ${bridge.id}`,
-          err.message,
-        ),
+          err.message
+        )
       );
   }
 }

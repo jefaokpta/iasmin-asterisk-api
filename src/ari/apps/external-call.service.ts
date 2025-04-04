@@ -13,7 +13,7 @@ export class ExternalCallService {
   constructor(
     private readonly configService: ConfigService,
     private readonly callAction: CallAction,
-    private readonly cacheControlService: CacheControlService,
+    private readonly cacheControlService: CacheControlService
   ) {}
 
   private readonly logger = new Logger(ExternalCallService.name);
@@ -21,6 +21,7 @@ export class ExternalCallService {
   async originateExternalCall(ari: Client, channelA: Channel, company: string) {
     this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
+    const dialTimeout = this.callAction.dialTimeout(channelA);
 
     channelA.on('StasisEnd', (event, channelA) => {
       this.callAction.stasisEndChannelA(channelA, channelB);
@@ -36,30 +37,35 @@ export class ExternalCallService {
       this.logger.warn(`Falta definir telefone da empresa: ${company}`);
       this.callAction.hangupChannel(channelA);
     }
+    const trunkName = this.configService.get('PABX_TRUNK');
+    if (!trunkName) {
+      this.logger.warn(`Falta definir trunk de saida: ${trunkName}`);
+      this.callAction.hangupChannel(channelA);
+    }
+    const techPrefix = this.configService.get('PABX_TECH_PREFIX');
+    if (!techPrefix) {
+      this.logger.warn(`Falta definir techPrefix: ${techPrefix}`);
+      this.callAction.hangupChannel(channelA);
+    }
     channelB.originate(
       {
-        endpoint: `PJSIP/${this.configService.get('PABX_TECH_PREFIX')}${channelA.dialplan.exten}@${this.configService.get('PABX_TRUNK')}`,
+        endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
         app: 'router-call-app',
         appArgs: 'dialed',
         callerId,
         variables: {
-          'PJSIP_HEADER(add,P-Asserted-Identity)': this.configService.get(
-            'PABX_COMPANY_IDENTITY',
-          ),
+          'PJSIP_HEADER(add,P-Asserted-Identity)': company,
         },
       },
       (err) => {
         if (err) {
-          Logger.error(
-            err.message,
-            'ExternalCallService.OriginateDialedChannel',
+          this.logger.error(
+            `Erro ao originar channel B ${trunkName}`,
+            err.message
           );
+          this.callAction.hangupChannel(channelA);
         }
-      },
+      }
     );
-
-    const dialTimeout = setTimeout(() => {
-      this.callAction.hangupChannel(channelA);
-    }, 30000);
   }
 }
