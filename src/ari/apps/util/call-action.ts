@@ -1,66 +1,120 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger } from '@nestjs/common';
 import { Bridge, Channel, Client } from 'ari-client';
+import { ChannelLeg } from './enus/channel-leg.enum';
 
 @Injectable()
 export class CallAction {
+  private readonly logger = new Logger(CallAction.name);
 
-    answerChannel(channel: Channel) {
-        channel.answer()
-            .catch((err) => Logger.error(`Erro ao atender canal ${channel.name} ${err.message}`, 'CallAction.answerChannel'));
-    }
+  answerChannel(channel: Channel) {
+    channel
+      .answer()
+      .catch((err) =>
+        this.logger.error(
+          `Erro ao atender canal ${channel.name} ${err.message}`,
+        ),
+      );
+  }
 
-    ringChannel(channel: Channel) {
-        channel.ring()
-            .catch((err) => Logger.error(`Erro ao iniciar ring do canal ${channel.name} ${err.message}`, 'CallAction.ringChannel'));
-    }
+  ringChannel(channel: Channel) {
+    channel
+      .ring()
+      .catch((err) =>
+        this.logger.error(
+          `Erro ao iniciar ring do canal ${channel.name} ${err.message}`,
+        ),
+      );
+  }
 
-    hangupChannel(channel: Channel) {
-        channel.hangup()
-            .catch((err) => Logger.error(`Erro ao desligar canal ${channel.name} ${err.message}`, 'CallAction.hangupChannel'));
-    }
+  hangupChannel(channel: Channel) {
+    channel
+      .hangup()
+      .catch((err) =>
+        this.logger.error(
+          `Erro ao desligar canal ${channel.name} ${err.message}`,
+        ),
+      );
+  }
 
-    stasisEndChannelA(channelA: Channel, channelB: Channel) {
-        Logger.log(`Canal A ${channelA.name} finalizou a chamada`, 'CallAction.stasisEndChannelA');
-        this.hangupChannel(channelB);
-    }
-    
-    stasisEndChannelB(channelA: Channel, channelB: Channel, bridge: Bridge) {
-        Logger.log(`Canal B ${channelB.name} finalizou a chamada`, 'CallAction.stasisEndChannelB');
-        this.hangupChannel(channelA);
-        this.bridgeDestroy(bridge, channelB);
-    }
+  stasisEndChannelA(channelA: Channel, channelB: Channel) {
+    this.logger.log(`Canal A ${channelA.name} finalizou a chamada`);
+    this.hangupChannel(channelB);
+  }
 
-    async createBridgeForChannels(ari: Client, channelA: Channel, channelB: Channel) {
-        const bridge = ari.Bridge();
+  stasisEndChannelB(channelA: Channel, channelB: Channel, bridge: Bridge) {
+    this.logger.log(`Canal B ${channelB.name} finalizou a chamada`);
+    this.hangupChannel(channelA);
+    this.bridgeDestroy(bridge, channelB);
+  }
 
-        this.answerChannel(channelA);
+  async createBridgeForChannels(
+    ari: Client,
+    channelA: Channel,
+    channelB: Channel,
+  ) {
+    const bridge = ari.Bridge();
 
-        channelB.on('StasisEnd', (event, channelB) => {
-            this.stasisEndChannelB(channelA, channelB, bridge);
-        })
+    this.answerChannel(channelA);
 
-        await bridge.create({type: 'mixing'})
-            .catch((err) => {Logger.error('Erro ao criar bridge', err.message, 'CallAction.createBridgeForChannels')});
+    channelB.on('StasisEnd', (event, channelB) => {
+      this.stasisEndChannelB(channelA, channelB, bridge);
+    });
 
-        this.addChannelsToBridge(channelA, channelB, bridge);
+    await bridge.create({ type: 'mixing' }).catch((err) => {
+      this.logger.error('Erro ao criar bridge', err.message);
+    });
 
-        bridge.record({
-            name: 'nao_nomeia_a_gravacao',
-            format: 'sln',
-        }, ari.LiveRecording(channelA.id.replace('.', '-')))
-            .catch((err) => Logger.error('Erro ao gravar chamada', err.message, 'CallAction.createBridgeForChannels'));
+    this.addChannelsToBridge(channelA, channelB, bridge);
+    this.recordBridge(bridge, ari, channelA);
+    this.recordChannel(channelA, ari, ChannelLeg.A);
+    this.recordChannel(channelB, ari, ChannelLeg.B);
+    return bridge;
+  }
 
-        return bridge;
-    }
+  private recordBridge(bridge: Bridge, ari: Client, channelA: Channel) {
+    const recordingName = channelA.id.replace('.', '-');
+    bridge
+      .record(
+        { name: recordingName, format: 'sln' },
+        ari.LiveRecording(recordingName),
+      )
+      .catch((err) => this.logger.error('Erro ao gravar chamada', err.message));
+  }
 
-    private bridgeDestroy(bridge: Bridge, channel: Channel) {
-        bridge.destroy()
-            .catch((err) => Logger.error(`Erro ao destruir bridge do canal ${channel.name} ${err.message}`, 'CallAction.bridgeDestroy'));
-    }
+  private recordChannel(channel: Channel, ari: Client, channelLeg: ChannelLeg) {
+    const recordingName = `${channel.id.replace('.', '-')}-${channelLeg}`;
+    channel
+      .record(
+        { name: recordingName, format: 'sln' },
+        ari.LiveRecording(recordingName),
+      )
+      .catch((err) =>
+        this.logger.error(`Erro ao gravar canal ${channel.name}`, err.message),
+      );
+  }
 
-    private addChannelsToBridge(channelA: Channel, channelB: Channel, bridge: Bridge) {
-        bridge.addChannel({ channel: [channelA.id, channelB.id] })
-            .catch((err) => Logger.error(`Erro ao adicionar canais ${channelA.name} e ${channelB.name} à bridge ${bridge.id} ${err.message}`, 'CallAction.addChannelsToBridge'));
-    }
+  private bridgeDestroy(bridge: Bridge, channel: Channel) {
+    bridge
+      .destroy()
+      .catch((err) =>
+        this.logger.error(
+          `Erro ao destruir bridge do canal ${channel.name} ${err.message}`,
+        ),
+      );
+  }
 
+  private addChannelsToBridge(
+    channelA: Channel,
+    channelB: Channel,
+    bridge: Bridge,
+  ) {
+    bridge
+      .addChannel({ channel: [channelA.id, channelB.id] })
+      .catch((err) =>
+        this.logger.error(
+          `Erro ao adicionar canais ${channelA.name} e ${channelB.name} à bridge ${bridge.id}`,
+          err.message,
+        ),
+      );
+  }
 }
