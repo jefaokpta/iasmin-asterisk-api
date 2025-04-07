@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Bridge, Channel, Client } from 'ari-client';
-import { ChannelLeg } from './enus/channel-leg.enum';
 
 @Injectable()
-export class CallAction {
-  private readonly logger = new Logger(CallAction.name);
+export class CallActionService {
+  private readonly logger = new Logger(CallActionService.name);
 
   answerChannel(channel: Channel) {
     channel.answer().catch(err => this.logger.error(`Erro ao atender canal ${channel.name} ${err.message}`));
@@ -17,17 +16,6 @@ export class CallAction {
   hangupChannel(channel: Channel) {
     channel.hangup().catch(err => this.logger.error(`Erro ao desligar canal ${channel.name} ${err.message}`));
   }
-
-  // stasisEndChannelA(channelA: Channel, channelB: Channel) {
-  //   this.logger.log(`Canal A ${channelA.name} finalizou a chamada`);
-  //   this.hangupChannel(channelB);
-  // }
-
-  // stasisEndChannelB(channelA: Channel, channelB: Channel, bridge: Bridge) {
-  //   this.logger.log(`Canal B ${channelB.name} finalizou a chamada`);
-  //   this.hangupChannel(channelA);
-  //   this.bridgeDestroy(bridge, channelB);
-  // }
 
   async createBridge(ari: Client) {
     const bridge = ari.Bridge();
@@ -44,18 +32,17 @@ export class CallAction {
     }, timeout);
   }
 
-  recordBridge(bridge: Bridge, ari: Client, channel: Channel, channelLeg: ChannelLeg) {
-    this.logger.log(`Gravando ponte mixed do canal ${channel.name} - ${channelLeg}`);
-    const recordingName = `${channel.id.replace('.', '-')}-${channelLeg}`;
+  recordBridge(bridge: Bridge, ari: Client, recordName: string) {
+    this.logger.log(`Gravando ponte mixed para ${recordName}`);
     bridge
-      .record({ name: recordingName, format: 'sln' }, ari.LiveRecording(recordingName))
+      .record({ name: recordName, format: 'sln' }, ari.LiveRecording(recordName))
       .catch(err => this.logger.error('Erro ao gravar chamada', err.message));
   }
 
-  async recordChannel(channel: Channel, ari: Client, channelLeg: ChannelLeg) {
-    const recordingName = `${channel.id.replace('.', '-')}-${channelLeg}`;
+  private async recordChannel(channel: Channel, ari: Client, recordName: string) {
+    this.logger.debug(`Gravando canal ${channel.name} - ${channel.id} - ${recordName}`);
     await channel
-      .record({ name: recordingName, format: 'sln' }, ari.LiveRecording(recordingName))
+      .record({ name: recordName, format: 'sln' }, ari.LiveRecording(recordName))
       .catch(err => this.logger.error(`Erro ao gravar canal ${channel.name}`, err.message));
   }
 
@@ -71,9 +58,9 @@ export class CallAction {
       );
   }
 
-  async createSnoopChannel(targetChannel: Channel) {
-    console.log(targetChannel);
-    return await targetChannel
+  async createSnoopChannelAndRecord(targetChannel: Channel, ari: Client, recordName: string) {
+    this.logger.debug(`Criando canal snoop para canal ${targetChannel.id} ${targetChannel.name}`);
+    const snoopChannel = await targetChannel
       .snoopChannel(
         {
           app: 'router-call-app',
@@ -86,5 +73,8 @@ export class CallAction {
       .catch(err => {
         throw Error(`Erro ao criar canal snoop ${err.message}`);
       });
+    snoopChannel.on('StasisStart', (event, snoop) => {
+      this.recordChannel(snoop, ari, recordName);
+    });
   }
 }

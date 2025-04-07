@@ -4,12 +4,13 @@
  */
 import { Channel, Client, StasisStart } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
-import { CallAction } from './util/call-action';
+import { CallActionService } from './util/call-action.service';
 import { ChannelLeg } from './util/enus/channel-leg.enum';
+import { recordName } from './util/utils';
 
 @Injectable()
 export class InternalCallService {
-  constructor(private readonly callAction: CallAction) {}
+  constructor(private readonly callAction: CallActionService) {}
 
   private readonly logger = new Logger(InternalCallService.name);
 
@@ -23,11 +24,6 @@ export class InternalCallService {
       this.callAction.hangupChannel(channelB);
     });
 
-    const snoopChannel = await this.callAction.createSnoopChannel(channelA);
-    snoopChannel.on('StasisStart', (event, snoop) => {
-      this.callAction.recordChannel(snoop, ari, ChannelLeg.A);
-    });
-
     channelB.on('StasisStart', async (event: StasisStart, channel: Channel) => {
       clearTimeout(dialTimeout);
       this.callAction.answerChannel(channelA);
@@ -37,8 +33,10 @@ export class InternalCallService {
         this.callAction.hangupChannel(channelA);
         this.callAction.bridgeDestroy(bridgeMain);
       });
+      await this.callAction.createSnoopChannelAndRecord(channelA, ari, recordName(channelA.id, ChannelLeg.A));
+      await this.callAction.createSnoopChannelAndRecord(channel, ari, recordName(channelA.id, ChannelLeg.B));
       this.callAction.addChannesToBridge(bridgeMain, [channelA, channel]);
-      this.callAction.recordBridge(bridgeMain, ari, channelA, ChannelLeg.MAIN);
+      this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MAIN));
     });
 
     channelB

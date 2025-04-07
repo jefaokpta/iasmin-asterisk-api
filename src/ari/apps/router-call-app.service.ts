@@ -47,7 +47,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
   private async stasisStart(event: StasisStart, channel: Channel, ari: Client) {
     if (event.args.includes('dialed')) {
-      this.logger.log(`Canal ${channel.name} atendeu a chamada de ${channel.caller.name}`);
+      this.logger.log(`Canal ${channel.name} atendeu a chamada de ${channel.caller.number} ${channel.caller.name}`);
       return;
     }
     try {

@@ -5,14 +5,14 @@
 import { Channel, Client, StasisStart } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CallAction } from './util/call-action';
+import { CallActionService } from './util/call-action.service';
 import { CacheControlService } from '../../cache-control/cache-control.service';
 
 @Injectable()
 export class ExternalCallService {
   constructor(
     private readonly configService: ConfigService,
-    private readonly callAction: CallAction,
+    private readonly callAction: CallActionService,
     private readonly cacheControlService: CacheControlService,
   ) {}
 
