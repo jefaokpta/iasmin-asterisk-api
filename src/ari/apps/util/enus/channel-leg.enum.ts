@@ -7,5 +7,5 @@
 export enum ChannelLeg {
   A = 'a',
   B = 'b',
-  MAIN = 'main'
+  MIXED = 'mixed'
 }
