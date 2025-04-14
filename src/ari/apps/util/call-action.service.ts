@@ -58,9 +58,9 @@ export class CallActionService {
       );
   }
 
-  async createSnoopChannelAndRecord(targetChannel: Channel, ari: Client, recordName: string) {
+  createSnoopChannelAndRecord(targetChannel: Channel, ari: Client, recordName: string) {
     this.logger.debug(`Criando canal snoop para canal ${targetChannel.id} ${targetChannel.name}`);
-    const snoopChannel = await targetChannel
+    targetChannel
       .snoopChannel(
         {
           app: 'router-call-app',
@@ -70,11 +70,11 @@ export class CallActionService {
         },
         targetChannel,
       )
+      .then(snoopChannel => {
+        this.recordChannel(snoopChannel, ari, recordName);
+      })
       .catch(err => {
         throw Error(`Erro ao criar canal snoop ${err.message}`);
       });
-    snoopChannel.on('StasisStart', (event, snoop) => {
-      this.recordChannel(snoop, ari, recordName);
-    });
   }
 }
