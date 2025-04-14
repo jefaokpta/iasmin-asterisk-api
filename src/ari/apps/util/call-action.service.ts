@@ -39,9 +39,9 @@ export class CallActionService {
       .catch(err => this.logger.error('Erro ao gravar chamada', err.message));
   }
 
-  private async recordChannel(channel: Channel, ari: Client, recordName: string) {
+  private recordChannel(channel: Channel, ari: Client, recordName: string) {
     this.logger.debug(`Gravando canal ${channel.name} - ${channel.id} - ${recordName}`);
-    await channel
+    channel
       .record({ name: recordName, format: 'sln' }, ari.LiveRecording(recordName))
       .catch(err => this.logger.error(`Erro ao gravar canal ${channel.name}`, err.message));
   }
