@@ -17,8 +17,9 @@ export class AmiConnectionService implements OnApplicationBootstrap {
   constructor(
     private readonly configService: ConfigService,
     private readonly cdrService: CdrService,
-    private readonly antiInvasionService: AntiInvasionService
+    private readonly antiInvasionService: AntiInvasionService,
   ) {}
+
   private ami: Manager;
 
   onApplicationBootstrap() {
@@ -27,25 +28,27 @@ export class AmiConnectionService implements OnApplicationBootstrap {
       this.configService.get('AMI_HOST'),
       this.configService.get('AMI_USER'),
       this.configService.get('AMI_PASS'),
-      true
+      true,
     );
 
-    this.ami.keepConnected()
+    this.ami.keepConnected();
 
     Logger.log('AMI Conectado 🚀', 'AmiConnectionService');
 
     this.ami.on('cdr', (cdr: any) => {
       if (cdr.destination == 's') return;
-      this.cdrService.cdrCreated(new Cdr(cdr))
+      this.cdrService.cdrCreated(new Cdr(cdr));
     });
-    this.ami.on('invalidaccountid', (invalidAccountId: any) => this.antiInvasionService.antiInvasion(new Invader(invalidAccountId)));
+    this.ami.on('invalidaccountid', (invalidAccountId: any) =>
+      this.antiInvasionService.antiInvasion(new Invader(invalidAccountId)),
+    );
   }
 
   pjsipReload() {
     try {
       this.ami.action({
-        'Action': 'Command',
-        'Command': 'pjsip reload'
+        Action: 'Command',
+        Command: 'pjsip reload',
       });
       Logger.log('PJSIP recarregado com sucesso', 'AmiConnectionService');
     } catch (error) {
@@ -53,5 +56,4 @@ export class AmiConnectionService implements OnApplicationBootstrap {
       throw error;
     }
   }
-
 }

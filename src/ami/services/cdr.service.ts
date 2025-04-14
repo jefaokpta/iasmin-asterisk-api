@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { Cdr } from '../models/cdr';
 import * as fs from 'node:fs';
-import { exec } from 'node:child_process';
+import { execSync } from 'node:child_process';
 
 @Injectable()
 export class CdrService {
@@ -17,50 +17,71 @@ export class CdrService {
     private readonly configService: ConfigService,
   ) {}
 
+  private readonly logger = new Logger(CdrService.name);
   private readonly HTTP_REQUEST_TIMEOUT = 30000;
   private readonly IASMIN_BACKEND_API = this.configService.get('IASMIN_BACKEND_API');
   private readonly AUDIO_RECORD = this.configService.get('AUDIO_RECORD');
+  private readonly AUDIO_RECORD_MP3 = `${this.AUDIO_RECORD}/mp3s`;
 
   async cdrCreated(cdr: Cdr) {
     if (cdr.billableSeconds > 0) {
-      this.convertAudioToMp3({ ...cdr, callRecord: this.createRecordFileName(cdr) });
-      return
+      await this.convertAudioToMp3({ ...cdr, callRecord: this.createRecordFileName(cdr) });
+      this.sendCdrToBackend(cdr);
+      return;
     }
     this.sendCdrToBackend(cdr);
   }
 
-  private convertAudioToMp3(cdr: Cdr) {
-    Logger.log(`Convertendo arquivo de audio para mp3 ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
+  private async convertAudioToMp3(cdr: Cdr) {
+    this.logger.log(`Convertendo arquivo de audio para mp3 ${cdr.callRecord}`);
     const audioFilePath = `${this.AUDIO_RECORD}/${cdr.uniqueId.replace('.', '-')}.sln`;
-    const mp3FilePath = `${this.AUDIO_RECORD}/mp3s/${cdr.callRecord}`;
+    const mp3FilePath = `${this.AUDIO_RECORD_MP3}/${cdr.callRecord}`;
     const command = `ffmpeg -i ${audioFilePath} -vn -acodec libmp3lame -ab 128k ${mp3FilePath}`;
-    exec(command, (err) => {
-      if (err) Logger.error(err.message, 'CdrService.convertAudioToMp3');
-      Logger.log(`Arquivo convertido com sucesso ${cdr.callRecord}`, 'CdrService.convertAudioToMp3');
-      this.sendCdrToBackend(cdr);
-      this.deleteWavFile(audioFilePath);
-    })
+    try {
+      execSync(command);
+      this.logger.log(`Arquivo convertido com sucesso ${cdr.callRecord}`);
+      this.moveAudiosToMp3Folder(cdr);
+    } catch (error) {
+      this.logger.error(error.message);
+    }
   }
 
-  private deleteWavFile(audioFile: string) {
-    fs.unlink(audioFile, (err) => {
-      if (err) Logger.error(err.message, 'CdrService.deleteWavFile');
+  private moveAudiosToMp3Folder(cdr: Cdr) {
+    const audioDirectory = `${this.AUDIO_RECORD}`;
+    const mp3Directory = `${this.AUDIO_RECORD_MP3}`;
+    fs.readdir(audioDirectory, (err, files) => {
+      if (err) {
+        this.logger.error(`Erro ao ler o diretório de áudios: ${err.message}`);
+        return;
+      }
+      files
+        .filter(file => file.includes(cdr.callRecord))
+        .forEach(file => {
+          const sourcePath = `${audioDirectory}/${file}`;
+          const destinationPath = `${mp3Directory}/${file}`;
+          fs.rename(sourcePath, destinationPath, renameErr => {
+            if (renameErr) {
+              this.logger.error(`Erro ao mover o arquivo ${file}: ${renameErr.message}`);
+            } else {
+              this.logger.log(`Arquivo ${file} movido com sucesso para ${mp3Directory}`);
+            }
+          });
+        });
     });
   }
 
   private sendCdrToBackend(cdr: Cdr) {
-    Logger.log(`Enviando CDR para o backend`, 'CdrService.sendCdrToBackend');
+    this.logger.log(`Enviando CDR para o backend`);
     firstValueFrom(
       this.httpService.post(`${this.IASMIN_BACKEND_API}/cdr`, cdr, {
         timeout: this.HTTP_REQUEST_TIMEOUT,
       }),
-    ).then((response) =>
-        Logger.log(`CDR enviada com sucesso! ${cdr.channel} ${response.data}`, 'CdrService.sendCdrToBackend'),
-      )
-      .catch((e) => {
-        Logger.error(e.message, 'CdrService.sendCdrToBackend');
-        if (e.response?.data){
-          Logger.error(e.response.data.message, 'CdrService.sendCdrToBackend');
+    )
+      .then(response => this.logger.log(`CDR enviada com sucesso! ${cdr.channel} ${response.data}`))
+      .catch(e => {
+        this.logger.error(e.message);
+        if (e.response?.data) {
+          this.logger.error(e.response.data.message);
         }
       });
   }
@@ -70,5 +91,4 @@ export class CdrService {
     const time = cdr.startTime.split(' ')[1].replace(/:/g, '');
     return `${date}_${time}_${cdr.src}_${cdr.destination}_${cdr.uniqueId.replace('.', '-')}.mp3`;
   }
-
 }
