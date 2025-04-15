@@ -81,25 +81,27 @@ export class CallActionService {
 
   private checkChannelIsOnStasis(channel: Channel, ari: Client): Promise<boolean> {
     let retries = 0;
-    const maxRetries = 5; // Número máximo de tentativas
-    const interval = 500; // Intervalo em ms entre tentativas
+    const maxRetries = 5;
+    const interval = 500;
 
     const tryGetChannel = (): Promise<boolean> => {
       return ari.channels
         .get({ channelId: channel.id })
         .then(() => true)
-        .catch(err => {
-          if (retries < maxRetries) {
-            retries++;
-            this.logger.warn(`Tentativa ${retries} de ${maxRetries} para encontrar canal no stasis falhou.`);
-            return new Promise(resolve => {
-              setTimeout(() => resolve(tryGetChannel()), interval);
-            });
-          }
-          this.logger.error(`Nao achou canal no stasis depois de ${maxRetries} tentativas`, err.message);
-          return false;
-        });
+        .catch(err => handleGetChannelError(err));
     };
+
+    const handleGetChannelError = (err: any): Promise<boolean> => {
+      if (retries < maxRetries) {
+        retries++;
+        this.logger.warn(`Tentativa ${retries} de ${maxRetries} para encontrar canal no stasis falhou.`);
+        return delay(interval).then(() => tryGetChannel());
+      }
+      this.logger.error(`Nao achou canal no stasis depois de ${maxRetries} tentativas`, err.message);
+      return Promise.resolve(false);
+    };
+
+    const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
     return tryGetChannel();
   }
