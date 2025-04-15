@@ -71,6 +71,15 @@ export class CallActionService {
         targetChannel,
       )
       .then(snoopChannel => {
+        // Implementação com polling para verificar stasis se der erro de nao gravar pq o canal nao esta no stasis
+        // let tentativas = 0;
+        // const maxTentativas = 10; // Número máximo de tentativas
+        // const intervalo = 500; // Intervalo em ms entre tentativas
+
+        this.logger.debug(`snoop stasis ${snoopChannel.id} ${snoopChannel.state}`);
+        ari.channels.get({ channelId: snoopChannel.id }).then(channel => {
+          this.logger.debug(`ari get channel ${channel.id} ${channel.state}`);
+        });
         this.recordChannel(snoopChannel, ari, recordName);
       })
       .catch(err => {

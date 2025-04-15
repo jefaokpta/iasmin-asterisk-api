@@ -7,7 +7,6 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { Cdr } from '../models/cdr';
-import * as fs from 'node:fs';
 import { execSync } from 'node:child_process';
 
 @Injectable()
@@ -34,40 +33,14 @@ export class CdrService {
 
   private async convertAudioToMp3(cdr: Cdr) {
     this.logger.log(`Convertendo arquivo de audio para mp3 ${cdr.callRecord}`);
-    const audioFilePath = `${this.AUDIO_RECORD}/${cdr.uniqueId.replace('.', '-')}.sln`;
+    const audioFilePath = `${this.AUDIO_RECORD}/${cdr.uniqueId.replace('.', '-')}-mixed.sln`;
     const mp3FilePath = `${this.AUDIO_RECORD_MP3}/${cdr.callRecord}`;
     const command = `ffmpeg -i ${audioFilePath} -vn -acodec libmp3lame -ab 128k ${mp3FilePath}`;
     try {
       execSync(command);
-      this.logger.log(`Arquivo convertido com sucesso ${cdr.callRecord}`);
-      this.moveAudiosToMp3Folder(cdr);
     } catch (error) {
       this.logger.error(error.message);
     }
-  }
-
-  private moveAudiosToMp3Folder(cdr: Cdr) {
-    const audioDirectory = `${this.AUDIO_RECORD}`;
-    const mp3Directory = `${this.AUDIO_RECORD_MP3}`;
-    fs.readdir(audioDirectory, (err, files) => {
-      if (err) {
-        this.logger.error(`Erro ao ler o diretório de áudios: ${err.message}`);
-        return;
-      }
-      files
-        .filter(file => file.includes(cdr.callRecord))
-        .forEach(file => {
-          const sourcePath = `${audioDirectory}/${file}`;
-          const destinationPath = `${mp3Directory}/${file}`;
-          fs.rename(sourcePath, destinationPath, renameErr => {
-            if (renameErr) {
-              this.logger.error(`Erro ao mover o arquivo ${file}: ${renameErr.message}`);
-            } else {
-              this.logger.log(`Arquivo ${file} movido com sucesso para ${mp3Directory}`);
-            }
-          });
-        });
-    });
   }
 
   private sendCdrToBackend(cdr: Cdr) {
