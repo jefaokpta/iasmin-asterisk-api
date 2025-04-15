@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "🚀 Building and running Iasmin Asterisk Manager"
+echo "🚀 Buildando Iasmin Asterisk Manager"
 
 echo "🔄 Sincronizando com GitHub"
 git pull
@@ -17,4 +17,4 @@ rm /var/log/iasmin-asterisk-api.log
 echo "🔄 Reiniciando serviço Iasmin Asterisk API"
 systemctl restart iasmin-asterisk-api
 
-echo "✅ Iasmin Asterisk API is running"
+echo "✅ Iasmin Asterisk API rodando"
