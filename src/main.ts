@@ -6,6 +6,9 @@ async function bootstrap() {
 
   app.enableCors();
 
+  // rodar em single core
+  //process.env.UV_THREADPOOL_SIZE = '1';
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

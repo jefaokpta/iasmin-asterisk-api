@@ -43,7 +43,7 @@ export class CallActionService {
     this.logger.debug(`Gravando canal ${channel.name} - ${channel.id} - ${recordName}`);
     channel
       .record({ name: recordName, format: 'sln' }, ari.LiveRecording(recordName))
-      .catch(err => this.logger.error(`Erro ao gravar canal ${channel.name}`, err.message));
+      .catch(err => this.logger.error(`Erro ao gravar canal ${channel.id} - ${channel.name}`, err.message));
   }
 
   bridgeDestroy(bridge: Bridge) {
@@ -70,20 +70,37 @@ export class CallActionService {
         },
         targetChannel,
       )
-      .then(snoopChannel => {
-        // Implementação com polling para verificar stasis se der erro de nao gravar pq o canal nao esta no stasis
-        // let tentativas = 0;
-        // const maxTentativas = 10; // Número máximo de tentativas
-        // const intervalo = 500; // Intervalo em ms entre tentativas
-
-        this.logger.debug(`snoop stasis ${snoopChannel.id} ${snoopChannel.state}`);
-        ari.channels.get({ channelId: snoopChannel.id }).then(channel => {
-          this.logger.debug(`ari get channel ${channel.id} ${channel.state}`);
-        });
+      .then(async snoopChannel => {
+        await this.checkChannelIsOnStasis(snoopChannel, ari);
         this.recordChannel(snoopChannel, ari, recordName);
       })
       .catch(err => {
         throw Error(`Erro ao criar canal snoop ${err.message}`);
       });
+  }
+
+  private checkChannelIsOnStasis(channel: Channel, ari: Client): Promise<boolean> {
+    let retries = 0;
+    const maxRetries = 5; // Número máximo de tentativas
+    const interval = 500; // Intervalo em ms entre tentativas
+
+    const tryGetChannel = (): Promise<boolean> => {
+      return ari.channels
+        .get({ channelId: channel.id })
+        .then(() => true)
+        .catch(err => {
+          if (retries < maxRetries) {
+            retries++;
+            this.logger.warn(`Tentativa ${retries} de ${maxRetries} para encontrar canal no stasis falhou.`);
+            return new Promise(resolve => {
+              setTimeout(() => resolve(tryGetChannel()), interval);
+            });
+          }
+          this.logger.error(`Nao achou canal no stasis depois de ${maxRetries} tentativas`, err.message);
+          return false;
+        });
+    };
+
+    return tryGetChannel();
   }
 }
