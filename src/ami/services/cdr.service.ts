@@ -37,7 +37,7 @@ export class CdrService {
     const mp3FilePath = `${this.AUDIO_RECORD_MP3}/${cdr.callRecord}`;
     const command = `ffmpeg -i ${audioFilePath} -vn -acodec libmp3lame -ab 128k ${mp3FilePath}`;
     try {
-      execSync(command);
+      execSync(command, { stdio: 'ignore' });
     } catch (error) {
       this.logger.error(error.message);
     }
