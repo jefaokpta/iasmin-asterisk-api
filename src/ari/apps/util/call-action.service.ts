@@ -64,7 +64,7 @@ export class CallActionService {
       .snoopChannel(
         {
           app: 'router-call-app',
-          appArgs: `record:${recordName}`,
+          appArgs: `record ${recordName}`,
           spy: 'in', // Options: 'in', 'out', 'both'
           whisper: 'none', // Options: 'none', 'out', 'both'
         },

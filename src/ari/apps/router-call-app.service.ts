@@ -52,8 +52,9 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       this.logger.log(`Canal ${channel.name} atendeu a chamada de ${channel.caller.number} ${channel.caller.name}`);
       return;
     }
-    if (event.args.includes('record')) {
-      const recordName = event.args[0].split(':')[1];
+    if (Array.isArray(event.args) && event.args.filter(arg => arg.startsWith('record')).length > 0) {
+      const recordName = event.args[0].split(' ')[1];
+      this.logger.debug(`snoop start grava ${recordName}`);
       this.callAction.recordChannel(channel, ari, recordName);
       return;
     }
