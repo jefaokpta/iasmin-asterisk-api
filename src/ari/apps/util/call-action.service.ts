@@ -72,7 +72,8 @@ export class CallActionService {
       )
       .then(async snoopChannel => {
         // await this.checkChannelIsOnStasis(snoopChannel, ari);
-        snoopChannel.on('StasisStart', async (event, channel) => {
+        snoopChannel.on('StasisStart', (event, channel) => {
+          this.logger.debug(`Canal snoop start ${channel.name} ${channel.id} tentando gravar`);
           this.recordChannel(channel, ari, recordName);
         });
       })
