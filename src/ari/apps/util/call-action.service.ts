@@ -39,7 +39,7 @@ export class CallActionService {
       .catch(err => this.logger.error('Erro ao gravar chamada', err.message));
   }
 
-  private recordChannel(channel: Channel, ari: Client, recordName: string) {
+  recordChannel(channel: Channel, ari: Client, recordName: string) {
     this.logger.debug(`Gravando canal ${channel.name} - ${channel.id} - ${recordName}`);
     channel
       .record({ name: recordName, format: 'sln' }, ari.LiveRecording(recordName))
@@ -64,19 +64,12 @@ export class CallActionService {
       .snoopChannel(
         {
           app: 'router-call-app',
-          appArgs: 'dialed',
+          appArgs: `record:${recordName}`,
           spy: 'in', // Options: 'in', 'out', 'both'
           whisper: 'none', // Options: 'none', 'out', 'both'
         },
         targetChannel,
       )
-      .then(async snoopChannel => {
-        // await this.checkChannelIsOnStasis(snoopChannel, ari);
-        snoopChannel.on('StasisStart', (event, channel) => {
-          this.logger.debug(`Canal snoop start ${channel.name} ${channel.id} tentando gravar`);
-          this.recordChannel(channel, ari, recordName);
-        });
-      })
       .catch(err => {
         throw Error(`Erro ao criar canal snoop ${err.message}`);
       });

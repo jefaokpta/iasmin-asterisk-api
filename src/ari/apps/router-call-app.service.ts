@@ -11,6 +11,7 @@ import { ExternalCallService } from './external-call.service';
 import { InternalCallService } from './internal-call.service';
 import { HttpClientService } from '../../http-client/http-client.service';
 import { CacheControlService } from '../../cache-control/cache-control.service';
+import { CallActionService } from './util/call-action.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
@@ -20,6 +21,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     private readonly internalCallService: InternalCallService,
     private readonly httpClientService: HttpClientService,
     private readonly cacheControlService: CacheControlService,
+    private readonly callAction: CallActionService,
   ) {}
 
   private readonly logger = new Logger(RouterCallAppService.name);
@@ -48,6 +50,11 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   private async stasisStart(event: StasisStart, channel: Channel, ari: Client) {
     if (event.args.includes('dialed')) {
       this.logger.log(`Canal ${channel.name} atendeu a chamada de ${channel.caller.number} ${channel.caller.name}`);
+      return;
+    }
+    if (event.args.includes('record')) {
+      const recordName = event.args[0].split(':')[1];
+      this.callAction.recordChannel(channel, ari, recordName);
       return;
     }
     try {
