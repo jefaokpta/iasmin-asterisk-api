@@ -71,8 +71,10 @@ export class CallActionService {
         targetChannel,
       )
       .then(async snoopChannel => {
-        await this.checkChannelIsOnStasis(snoopChannel, ari);
-        this.recordChannel(snoopChannel, ari, recordName);
+        // await this.checkChannelIsOnStasis(snoopChannel, ari);
+        snoopChannel.on('StasisStart', async (event, channel) => {
+          this.recordChannel(channel, ari, recordName);
+        });
       })
       .catch(err => {
         throw Error(`Erro ao criar canal snoop ${err.message}`);
