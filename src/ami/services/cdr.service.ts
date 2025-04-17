@@ -23,12 +23,13 @@ export class CdrService {
   private readonly AUDIO_RECORD_MP3 = `${this.AUDIO_RECORD}/mp3s`;
 
   async cdrCreated(cdr: Cdr) {
+    const cdrUpdated = { ...cdr, callRecord: this.createRecordFileName(cdr) };
     if (cdr.billableSeconds > 0) {
-      await this.convertAudioToMp3({ ...cdr, callRecord: this.createRecordFileName(cdr) });
-      this.sendCdrToBackend(cdr);
+      await this.convertAudioToMp3(cdrUpdated);
+      this.sendCdrToBackend(cdrUpdated);
       return;
     }
-    this.sendCdrToBackend(cdr);
+    this.sendCdrToBackend(cdrUpdated);
   }
 
   private async convertAudioToMp3(cdr: Cdr) {
