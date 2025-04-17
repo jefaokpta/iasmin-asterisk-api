@@ -7,6 +7,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CallActionService } from './util/call-action.service';
 import { CacheControlService } from '../../cache-control/cache-control.service';
+import { recordName } from './util/utils';
+import { ChannelLeg } from './util/enus/channel-leg.enum';
 
 @Injectable()
 export class ExternalCallService {
@@ -31,12 +33,16 @@ export class ExternalCallService {
     channelB.on('StasisStart', async (event: StasisStart, channel: Channel) => {
       clearTimeout(dialTimeout);
       this.callAction.answerChannel(channelA);
-      const bridge = await this.callAction.createBridge(ari);
+      const bridgeMain = await this.callAction.createBridge(ari);
       channel.on('StasisEnd', (event, c) => {
-        this.logger.log(`Canal B ${c.name} finalizou a chamada`);
+        this.logger.log(`Canal B ${c.id} finalizou a chamada`);
         this.callAction.hangupChannel(channelA);
-        this.callAction.bridgeDestroy(bridge);
+        this.callAction.bridgeDestroy(bridgeMain);
       });
+      this.callAction.createSnoopChannelAndRecord(channelA, ari, recordName(channelA.id, ChannelLeg.A));
+      this.callAction.createSnoopChannelAndRecord(channel, ari, recordName(channelA.id, ChannelLeg.B));
+      this.callAction.addChannesToBridge(bridgeMain, [channelA, channel]);
+      this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
     });
 
     const callerId = await this.cacheControlService.getCompanyPhone(company);

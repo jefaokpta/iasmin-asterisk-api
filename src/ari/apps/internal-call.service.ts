@@ -29,7 +29,7 @@ export class InternalCallService {
       this.callAction.answerChannel(channelA);
       const bridgeMain = await this.callAction.createBridge(ari);
       channel.on('StasisEnd', (event, c) => {
-        this.logger.log(`Canal B ${c.name} finalizou a chamada`);
+        this.logger.log(`Canal B ${c.id} finalizou a chamada`);
         this.callAction.hangupChannel(channelA);
         this.callAction.bridgeDestroy(bridgeMain);
       });
