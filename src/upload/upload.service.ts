@@ -15,7 +15,7 @@ export class UploadService {
       const tempPath = join(this.configService.get('AUDIO_RECORD')!, 'mp3s', newName);
       writeFileSync(tempPath, audio.buffer);
       this.logger.debug(`Arquivo ${newName} salvo com sucesso!`);
-      return newName;
+      return { audio: newName };
     } catch (error) {
       this.logger.error(`Erro ao salvar arquivo: ${error}`);
       throw new HttpException('Erro ao salvar arquivo de áudio', HttpStatus.INTERNAL_SERVER_ERROR);
