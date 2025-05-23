@@ -1,21 +1,21 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { createHash } from "node:crypto";
-import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { UserDto } from "./dto/user.dto";
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createHash } from 'node:crypto';
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { UserDto } from './dto/user.dto';
+
 @Injectable()
 export class PeerWriter {
+  constructor(private readonly configService: ConfigService) {}
 
-    constructor(private readonly configService: ConfigService) {}
+  async writePeers(users: UserDto[]) {
+    const content = users.map(user => this.generatePeerConfig(user)).join('\n');
+    await writeFile(join(this.configService.get('ASTERISK_CONFIG')!, 'pjsip-peers.conf'), content);
+  }
 
-    async writePeers(users: UserDto[]) {
-        const content = users.map(user => this.generatePeerConfig(user)).join('\n');
-        await writeFile(join(this.configService.get('ASTERISK_CONFIG')!, 'pjsip-peers.conf'), content);
-    }
-
-    private generatePeerConfig(user: UserDto): string {
-        return `
+  private generatePeerConfig(user: UserDto): string {
+    return `
 ;=============== ENDPOINT: ${user.id}
 [${user.id}]
 type=endpoint
@@ -52,11 +52,9 @@ md5_cred=${this.generatePassword(user)}
 ;=============== FIM: ${user.id}
 
 `.trim();
-    }
+  }
 
-    private generatePassword(user: UserDto): string {
-        const SECRET_PEER_KEY = this.configService.get('SECRET_PEER_KEY')!;
-        return createHash('md5').update(`${user.id}:asterisk:${SECRET_PEER_KEY}:${user.id}:${user.controlNumber}`).digest('hex');
-    }
-
+  private generatePassword(user: UserDto): string {
+    return createHash('md5').update(`${user.id}:asterisk:IASMIN_WEBPHONE_${user.id}`).digest('hex');
+  }
 }
