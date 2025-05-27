@@ -6,7 +6,7 @@ import { Channel, Client, StasisStart } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CallActionService } from './util/call-action.service';
-import { CacheControlService } from '../../cache-control/cache-control.service';
+import { CompanyCacheService } from '../../cache-control/company-cache.service';
 import { recordName } from './util/utils';
 import { ChannelLeg } from './util/enus/channel-leg.enum';
 
@@ -15,7 +15,7 @@ export class ExternalCallService {
   constructor(
     private readonly configService: ConfigService,
     private readonly callAction: CallActionService,
-    private readonly cacheControlService: CacheControlService,
+    private readonly cacheControlService: CompanyCacheService,
   ) {}
 
   private readonly logger = new Logger(ExternalCallService.name);

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { CacheControlService } from '../cache-control/cache-control.service';
+import { CompanyCacheService } from '../cache-control/company-cache.service';
 import { Company } from './models/company';
 
 @Injectable()
 export class CompaniesService {
-  constructor(private readonly cacheControlService: CacheControlService) {}
+  constructor(private readonly cacheControlService: CompanyCacheService) {}
 
   changeCompanyPhone(company: Company) {
     this.cacheControlService.changeCompanyPhone(company);

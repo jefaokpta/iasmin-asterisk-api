@@ -3,16 +3,14 @@ import { Cache } from 'cache-manager';
 import { Company } from '../companies/models/company';
 
 @Injectable()
-export class CacheControlService {
+export class CompanyCacheService {
   constructor(
     @Inject('CACHE_MANAGER')
     private readonly cacheManager: Cache,
   ) {}
 
   loadCompanies(companies: Company[]) {
-    companies.forEach((c) =>
-      this.cacheManager.set(c.controlNumber.toString(), c.phone.toString()),
-    );
+    companies.forEach(c => this.cacheManager.set(c.controlNumber.toString(), c.phone.toString()));
   }
 
   async getCompanyPhone(controlNumber: string): Promise<string | undefined> {
@@ -22,9 +20,6 @@ export class CacheControlService {
   }
 
   changeCompanyPhone(company: Company) {
-    this.cacheManager.set(
-      company.controlNumber.toString(),
-      company.phone.toString(),
-    );
+    this.cacheManager.set(company.controlNumber.toString(), company.phone.toString());
   }
 }

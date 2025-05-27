@@ -10,8 +10,9 @@ import { externalMediaCall } from './external-media-call';
 import { ExternalCallService } from './external-call.service';
 import { InternalCallService } from './internal-call.service';
 import { HttpClientService } from '../../http-client/http-client.service';
-import { CacheControlService } from '../../cache-control/cache-control.service';
+import { CompanyCacheService } from '../../cache-control/company-cache.service';
 import { CallActionService } from './util/call-action.service';
+import { UserCacheService } from '../../cache-control/user-cache.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
@@ -20,7 +21,8 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     private readonly externalCallService: ExternalCallService,
     private readonly internalCallService: InternalCallService,
     private readonly httpClientService: HttpClientService,
-    private readonly cacheControlService: CacheControlService,
+    private readonly companyCacheService: CompanyCacheService,
+    private readonly userCacheService: UserCacheService,
     private readonly callAction: CallActionService,
   ) {}
 
@@ -44,7 +46,9 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     );
 
     this.logger.log('Carregando empresas...');
-    this.cacheControlService.loadCompanies(await this.httpClientService.getCompanies());
+    this.companyCacheService.loadCompanies(await this.httpClientService.getCompanies());
+    this.logger.log('Carregando usuários...');
+    this.userCacheService.loadUsers(await this.httpClientService.getUsers());
   }
 
   private async stasisStart(event: StasisStart, channel: Channel, ari: Client) {

@@ -4,12 +4,13 @@
  * @create 4/3/25
  */
 import { Module } from '@nestjs/common';
-import { CacheControlService } from './cache-control.service';
+import { CompanyCacheService } from './company-cache.service';
 import { CacheModule } from '@nestjs/cache-manager';
+import { UserCacheService } from './user-cache.service';
 
 @Module({
   imports: [CacheModule.register()],
-  providers: [CacheControlService],
-  exports: [CacheControlService],
+  providers: [CompanyCacheService],
+  exports: [CompanyCacheService, UserCacheService],
 })
 export class CacheControlModule {}
