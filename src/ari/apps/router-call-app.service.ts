@@ -6,13 +6,13 @@
 import { Channel, Client, connect, StasisStart } from 'ari-client';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { externalMediaCall } from './external-media-call';
 import { ExternalCallService } from './external-call.service';
 import { InternalCallService } from './internal-call.service';
 import { HttpClientService } from '../../http-client/http-client.service';
 import { CompanyCacheService } from '../../cache-control/company-cache.service';
 import { CallActionService } from './util/call-action.service';
 import { UserCacheService } from '../../cache-control/user-cache.service';
+import { CallAllUsersService } from './call-all-users.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
@@ -24,6 +24,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     private readonly companyCacheService: CompanyCacheService,
     private readonly userCacheService: UserCacheService,
     private readonly callAction: CallActionService,
+    private readonly callAllUsersService: CallAllUsersService,
   ) {}
 
   private readonly logger = new Logger(RouterCallAppService.name);
@@ -83,13 +84,8 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
       if (!company) return;
 
-      if (channel.dialplan.exten === '12345') {
-        externalMediaCall(ari, channel);
-        return;
-      }
-
       if (channel.dialplan.exten.length < 8) {
-        this.internalCallService.originateInternalCall(ari, channel);
+        this.callAllUsersService.callAllUsers(ari, channel, company);
         return;
       }
 

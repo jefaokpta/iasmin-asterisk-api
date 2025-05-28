@@ -27,9 +27,9 @@ export class UserCacheService {
     });
   }
 
-  async getUsersByControlNumber(controlNumber: string): Promise<UserDto[] | undefined> {
+  async getUsersByControlNumber(controlNumber: string): Promise<UserDto[]> {
     const users = await this.cacheManager.get<UserDto[]>(controlNumber);
     if (users) return users;
-    return undefined;
+    return [];
   }
 }

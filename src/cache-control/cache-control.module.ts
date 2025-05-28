@@ -10,7 +10,7 @@ import { UserCacheService } from './user-cache.service';
 
 @Module({
   imports: [CacheModule.register()],
-  providers: [CompanyCacheService],
+  providers: [CompanyCacheService, UserCacheService],
   exports: [CompanyCacheService, UserCacheService],
 })
 export class CacheControlModule {}
