@@ -46,7 +46,7 @@ export class HttpClientService {
       });
       return response.data;
     } catch (error) {
-      this.logger.error(`Erro ao obter usuarios: ${error}`);
+      this.logger.error(`Erro ao obter usuários: ${error}`);
       throw error;
     }
   }

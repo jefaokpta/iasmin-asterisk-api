@@ -58,7 +58,7 @@ export class CallActionService {
       );
   }
 
-  createSnoopChannelAndRecord(targetChannel: Channel, ari: Client, recordName: string) {
+  createSnoopChannelAndRecord(targetChannel: Channel, recordName: string) {
     this.logger.debug(`Criando canal snoop para canal ${targetChannel.id} ${targetChannel.name}`);
     targetChannel
       .snoopChannel(

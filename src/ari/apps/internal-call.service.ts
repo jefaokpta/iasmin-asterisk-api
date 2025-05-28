@@ -33,8 +33,8 @@ export class InternalCallService {
         this.callAction.hangupChannel(channelA);
         this.callAction.bridgeDestroy(bridgeMain);
       });
-      this.callAction.createSnoopChannelAndRecord(channelA, ari, recordName(channelA.id, ChannelLeg.A));
-      this.callAction.createSnoopChannelAndRecord(channel, ari, recordName(channelA.id, ChannelLeg.B));
+      this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A));
+      this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B));
       this.callAction.addChannesToBridge(bridgeMain, [channelA, channel]);
       this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
     });
