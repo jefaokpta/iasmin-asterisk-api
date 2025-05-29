@@ -26,20 +26,21 @@ export class CallAllUsersService {
     }
     const peers = await this.getPeers(ari);
     const dialedUsers: Channel[] = [];
-    this.callAction.ringChannel(channelA);
     const dialTimeout = this.callAction.dialTimeout(channelA);
+    channelA.once('StasisEnd', () => this.hangupAllChannels(dialedUsers, dialTimeout));
+    this.callAction.ringChannel(channelA);
     users
       .filter((user) => user.id.toString() !== channelA.caller.number)
       .filter((user) => peers.find((peer) => peer.resource === user.id.toString() && peer.state === 'online'))
       .forEach((user) => {
         const channelB = ari.Channel();
         dialedUsers.push(channelB);
-
         channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
           clearTimeout(dialTimeout);
           this.cancelOthersDials(channel, dialedUsers);
           this.logger.debug(`Canal ${channel.name} atendeu a chamada de ${channelA.caller.number}`);
 
+          channelA.removeAllListeners('StasisEnd');
           channelA.once('StasisEnd', (event, channel) => {
             this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
             this.callAction.hangupChannel(channelB);
@@ -74,6 +75,12 @@ export class CallAllUsersService {
       .forEach((channel) => {
         this.callAction.hangupChannel(channel);
       });
+  }
+
+  private hangupAllChannels(dialedUsers: Channel[], dialTimeout: any) {
+    this.logger.debug(`desligando todos`);
+    clearTimeout(dialTimeout);
+    dialedUsers.forEach((channel) => this.callAction.hangupChannel(channel));
   }
 
   private getPeers(ari: Client): Promise<Endpoint[]> {
