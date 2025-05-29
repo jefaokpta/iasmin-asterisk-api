@@ -27,7 +27,7 @@ export class CallActionService {
 
   dialTimeout(channel: Channel, timeout: number = 30000) {
     return setTimeout(() => {
-      this.logger.warn(`Timeout de ${timeout}ms para canal ${channel.name} atendere a chamada`);
+      this.logger.warn(`Timeout de ${timeout}ms para canal ${channel.name} atender a chamada`);
       this.hangupChannel(channel);
     }, timeout);
   }

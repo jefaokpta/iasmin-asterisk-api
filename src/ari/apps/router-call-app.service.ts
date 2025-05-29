@@ -53,10 +53,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   }
 
   private async stasisStart(event: StasisStart, channel: Channel, ari: Client) {
-    if (event.args.includes('dialed')) {
-      this.logger.log(`Canal ${channel.name} atendeu a chamada de ${channel.caller.number} ${channel.caller.name}`);
-      return;
-    }
+    if (event.args.includes('dialed')) return;
     if (Array.isArray(event.args) && event.args.filter(arg => arg.startsWith('record')).length > 0) {
       const recordName = event.args[0].split(' ')[1];
       this.callAction.recordChannel(channel, ari, recordName);
