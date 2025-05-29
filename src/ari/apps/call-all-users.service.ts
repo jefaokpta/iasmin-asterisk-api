@@ -34,6 +34,7 @@ export class CallAllUsersService {
       .forEach((user) => {
         const channelB = ari.Channel();
         dialedUsers.push(channelB);
+
         channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
           clearTimeout(dialTimeout);
           this.cancelOthersDials(channel, dialedUsers);

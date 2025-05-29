@@ -30,21 +30,16 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   private readonly logger = new Logger(RouterCallAppService.name);
 
   async onApplicationBootstrap() {
-    connect(
-      this.configService.get('ARI_HOST')!,
-      this.configService.get('ARI_USER')!,
-      this.configService.get('ARI_PASS')!,
-      (error, ari) => {
-        if (error) this.logger.error(`💣️ Erro ao conectar ao Asterisk ${error.message}`);
-        ari.on('StasisStart', (stasisStartEvent: StasisStart, channel: Channel) => {
-          this.stasisStart(stasisStartEvent, channel, ari);
-        });
-        ari
-          .start('router-call-app')
-          .then(() => this.logger.log('Roteador de chamadas: router-call-app 🚀'))
-          .catch(err => this.logger.error(`💣️ Erro ao iniciar app router-call-app ${err.message}`));
-      },
-    );
+    connect(this.configService.get('ARI_HOST')!, this.configService.get('ARI_USER')!, this.configService.get('ARI_PASS')!, (error, ari) => {
+      if (error) this.logger.error(`💣️ Erro ao conectar ao Asterisk ${error.message}`);
+      ari.on('StasisStart', (stasisStartEvent: StasisStart, channel: Channel) => {
+        this.stasisStart(stasisStartEvent, channel, ari);
+      });
+      ari
+        .start('router-call-app')
+        .then(() => this.logger.log('Roteador de chamadas: router-call-app 🚀'))
+        .catch((err) => this.logger.error(`💣️ Erro ao iniciar app router-call-app ${err.message}`));
+    });
 
     this.logger.log('Carregando empresas...');
     this.companyCacheService.loadCompanies(await this.httpClientService.getCompanies());
@@ -54,7 +49,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
   private async stasisStart(event: StasisStart, channel: Channel, ari: Client) {
     if (event.args.includes('dialed')) return;
-    if (Array.isArray(event.args) && event.args.filter(arg => arg.startsWith('record')).length > 0) {
+    if (Array.isArray(event.args) && event.args.filter((arg) => arg.startsWith('record')).length > 0) {
       const recordName = event.args[0].split(' ')[1];
       this.callAction.recordChannel(channel, ari, recordName);
       return;
@@ -75,9 +70,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
         this.logger.warn(`Não foi possível obter X-CALL-TOKEN: ${error.message}`);
       }
 
-      this.logger.log(
-        `Ligacao de ${channel.name} ${channel.caller.name} para ${channel.dialplan.exten} Empresa ${company} - token ${callToken}`,
-      );
+      this.logger.log(`Ligacao de ${channel.name} ${channel.caller.name} para ${channel.dialplan.exten} Empresa ${company} - token ${callToken}`);
 
       if (!company) return;
 
