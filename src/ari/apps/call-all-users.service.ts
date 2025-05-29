@@ -10,12 +10,12 @@ import { Channel, Client, Endpoint, StasisStart } from 'ari-client';
 
 @Injectable()
 export class CallAllUsersService {
+  private readonly logger = new Logger(CallAllUsersService.name);
+
   constructor(
     private readonly callAction: CallActionService,
     private readonly userCacheService: UserCacheService,
   ) {}
-
-  private readonly logger = new Logger(CallAllUsersService.name);
 
   async callAllUsers(ari: Client, channelA: Channel, company: string) {
     this.logger.log('Chamando todos os usuários da empresa: ' + company);
@@ -29,24 +29,22 @@ export class CallAllUsersService {
     this.callAction.ringChannel(channelA);
     const dialTimeout = this.callAction.dialTimeout(channelA);
     users
-      .filter(user => user.id.toString() !== channelA.caller.number)
-      .filter(user => peers.find(peer => peer.resource === user.id.toString() && peer.state === 'online'))
-      .forEach((user, index) => {
+      .filter((user) => user.id.toString() !== channelA.caller.number)
+      .filter((user) => peers.find((peer) => peer.resource === user.id.toString() && peer.state === 'online'))
+      .forEach((user) => {
         const channelB = ari.Channel();
         dialedUsers.push(channelB);
         channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
           clearTimeout(dialTimeout);
           this.cancelOthersDials(channel, dialedUsers);
-          this.logger.debug(
-            `Canal ${channel.name} atendeu a chamada de ${channelA.caller.number} ${channelA.caller.name}`,
-          );
+          this.logger.debug(`Canal ${channel.name} atendeu a chamada de ${channelA.caller.number}`);
 
           channelA.once('StasisEnd', (event, channel) => {
             this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
             this.callAction.hangupChannel(channelB);
           });
 
-          channel.on('StasisEnd', (event, c) => {
+          channel.once('StasisEnd', (event, c) => {
             this.logger.log(`Canal B ${c.id} finalizou a chamada`);
             this.callAction.hangupChannel(channelA);
             this.callAction.bridgeDestroy(bridge);
@@ -62,7 +60,7 @@ export class CallAllUsersService {
             appArgs: 'dialed',
             callerId: channelA.caller.number,
           })
-          .catch(err => {
+          .catch((err) => {
             this.logger.error('Erro ao originar chamada', err.message);
             this.callAction.hangupChannel(channelA);
           });
@@ -71,8 +69,8 @@ export class CallAllUsersService {
 
   private cancelOthersDials(channelAttendant: Channel, dialedUsers: Channel[]) {
     dialedUsers
-      .filter(channel => channel.id !== channelAttendant.id)
-      .forEach(channel => {
+      .filter((channel) => channel.id !== channelAttendant.id)
+      .forEach((channel) => {
         this.callAction.hangupChannel(channel);
       });
   }

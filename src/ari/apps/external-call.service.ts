@@ -25,16 +25,16 @@ export class ExternalCallService {
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
 
-    channelA.on('StasisEnd', (event, channel) => {
+    channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
       this.callAction.hangupChannel(channelB);
     });
 
-    channelB.on('StasisStart', async (event: StasisStart, channel: Channel) => {
+    channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
       clearTimeout(dialTimeout);
       this.callAction.answerChannel(channelA);
       const bridgeMain = await this.callAction.createBridge(ari);
-      channel.on('StasisEnd', (event, c) => {
+      channel.once('StasisEnd', (event, c) => {
         this.logger.log(`Canal B ${c.id} finalizou a chamada`);
         this.callAction.hangupChannel(channelA);
         this.callAction.bridgeDestroy(bridgeMain);
@@ -70,7 +70,7 @@ export class ExternalCallService {
           'PJSIP_HEADER(add,P-Asserted-Identity)': company,
         },
       },
-      err => {
+      (err) => {
         if (err) {
           this.logger.error(`Erro ao originar channel B ${trunkName}`, err.message);
           this.callAction.hangupChannel(channelA);
