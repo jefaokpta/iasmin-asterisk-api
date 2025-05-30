@@ -8,9 +8,7 @@ export class CompanyCacheService {
   constructor() {}
 
   loadCompanies(companies: Company[]) {
-    console.log(companies);
     companies.forEach((company) => this.setCompanyPhone(company));
-    console.log(this.companyCache);
   }
 
   getCompanyPhone(controlNumber: string): string | undefined {
