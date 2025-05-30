@@ -10,7 +10,7 @@ export class PeerWriter {
   constructor(private readonly configService: ConfigService) {}
 
   async writePeers(users: UserDto[]) {
-    const content = users.map(user => this.generatePeerConfig(user)).join('\n');
+    const content = users.map((user) => this.generatePeerConfig(user)).join('\n');
     await writeFile(join(this.configService.get('ASTERISK_CONFIG')!, 'pjsip-peers.conf'), content);
   }
 
@@ -28,7 +28,7 @@ named_call_group=${user.controlNumber}
 named_pickup_group=${user.controlNumber}
 dtmf_mode=rfc4733
 disallow=all
-allow=g722
+allow=alaw
 auth=${user.id}
 aors=${user.id}
 set_var=CDR(company)=${user.controlNumber}
