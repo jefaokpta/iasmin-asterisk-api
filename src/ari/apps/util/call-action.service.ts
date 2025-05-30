@@ -54,12 +54,12 @@ export class CallActionService {
       .catch((err) => this.logger.error(`Erro ao adicionar canais ${channels[0].name} à bridge ${bridge.id}`, err.message));
   }
 
-  createSnoopChannelAndRecord(targetChannel: Channel, recordName: string) {
+  createSnoopChannelAndRecord(targetChannel: Channel, recordName: string, ariApp: string) {
     this.logger.debug(`Criando canal snoop para canal ${targetChannel.id} ${targetChannel.name}`);
     targetChannel
       .snoopChannel(
         {
-          app: 'router-call-app',
+          app: ariApp,
           appArgs: `record ${recordName}`,
           spy: 'in', // Options: 'in', 'out', 'both'
           whisper: 'none', // Options: 'none', 'out', 'both'

@@ -14,7 +14,7 @@ export class InternalCallService {
 
   private readonly logger = new Logger(InternalCallService.name);
 
-  async originateInternalCall(ari: Client, channelA: Channel) {
+  async originateInternalCall(ari: Client, channelA: Channel, ariApp: string) {
     this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
@@ -33,8 +33,8 @@ export class InternalCallService {
         this.callAction.hangupChannel(channelA);
         this.callAction.bridgeDestroy(bridgeMain);
       });
-      this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A));
-      this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B));
+      this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
+      this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B), ariApp);
       this.callAction.addChannesToBridge(bridgeMain, [channelA, channel]);
       this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
     });
@@ -42,12 +42,12 @@ export class InternalCallService {
     channelB
       .originate({
         endpoint: `PJSIP/${channelA.dialplan.exten}`,
-        app: 'router-call-app',
+        app: ariApp,
         appArgs: 'dialed',
         callerId: channelA.caller.number,
       })
       .catch((err) => {
-        this.logger.error('Erro ao originar chamada', err.message);
+        this.logger.error(`Erro ao originar chamada ${channelA.name}`, err.message);
         this.callAction.hangupChannel(channelA);
       });
   }

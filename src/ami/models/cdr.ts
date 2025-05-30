@@ -12,7 +12,7 @@ export class Cdr {
   readonly billableSeconds: number;
   readonly uniqueId: string;
   readonly disposition: string;
-  readonly company: number;
+  readonly company: string;
   readonly startTime: string;
   readonly callRecord: string;
   readonly channel: string;
@@ -27,7 +27,7 @@ export class Cdr {
     this.billableSeconds = Number(cdr.billableseconds);
     this.uniqueId = cdr.uniqueid;
     this.disposition = cdr.disposition;
-    this.company = Number(cdr.company);
+    this.company = cdr.company;
     this.startTime = cdr.starttime;
     this.callRecord = cdr.callrecord
     this.channel = cdr.channel

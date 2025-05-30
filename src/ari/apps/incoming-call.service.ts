@@ -9,15 +9,15 @@ import { UserCacheService } from '../../cache-control/user-cache.service';
 import { Channel, Client, Endpoint, StasisStart } from 'ari-client';
 
 @Injectable()
-export class CallAllUsersService {
-  private readonly logger = new Logger(CallAllUsersService.name);
+export class IncomingCallService {
+  private readonly logger = new Logger(IncomingCallService.name);
 
   constructor(
     private readonly callAction: CallActionService,
     private readonly userCacheService: UserCacheService,
   ) {}
 
-  async callAllUsers(ari: Client, channelA: Channel, company: string) {
+  async callAllUsers(ari: Client, channelA: Channel, company: string, ariApp: string) {
     this.logger.log('Chamando todos os usuários da empresa: ' + company);
     const users = this.userCacheService.getUsersByControlNumber(company);
     if (users.length === 0) {
@@ -58,7 +58,7 @@ export class CallAllUsersService {
         channelB
           .originate({
             endpoint: `PJSIP/${user.id.toString()}`,
-            app: 'router-call-app',
+            app: ariApp,
             appArgs: 'dialed',
             callerId: channelA.caller.number,
           })

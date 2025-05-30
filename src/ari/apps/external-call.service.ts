@@ -20,7 +20,7 @@ export class ExternalCallService {
 
   private readonly logger = new Logger(ExternalCallService.name);
 
-  originateExternalCall(ari: Client, channelA: Channel, company: string) {
+  originateExternalCall(ari: Client, channelA: Channel, company: string, ariApp: string) {
     this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
@@ -40,8 +40,8 @@ export class ExternalCallService {
         this.callAction.hangupChannel(channelA);
         this.callAction.bridgeDestroy(bridgeMain);
       });
-      this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A));
-      this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B));
+      this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
+      this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B), ariApp);
       this.callAction.addChannesToBridge(bridgeMain, [channelA, channel]);
       this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
     });
@@ -74,7 +74,7 @@ export class ExternalCallService {
     channelB.originate(
       {
         endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
-        app: 'router-call-app',
+        app: ariApp,
         appArgs: 'dialed',
         callerId,
         variables: {
