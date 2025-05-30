@@ -19,7 +19,7 @@ export class CallAllUsersService {
 
   async callAllUsers(ari: Client, channelA: Channel, company: string) {
     this.logger.log('Chamando todos os usuários da empresa: ' + company);
-    const users = await this.userCacheService.getUsersByControlNumber(company);
+    const users = this.userCacheService.getUsersByControlNumber(company);
     if (users.length === 0) {
       this.logger.warn('Não existe usuários da empresa: ' + company);
       this.callAction.hangupChannel(channelA);

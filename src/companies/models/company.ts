@@ -3,8 +3,12 @@
  * @email jefaokpta@hotmail.com
  * @create 4/3/25
  */
+import { IsNumberString } from 'class-validator';
 
-export interface Company {
-    readonly controlNumber: number
-    readonly phone: number
+export class Company {
+  @IsNumberString()
+  readonly controlNumber: string;
+
+  @IsNumberString()
+  readonly phone: string;
 }

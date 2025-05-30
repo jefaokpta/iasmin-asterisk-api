@@ -20,7 +20,7 @@ export class ExternalCallService {
 
   private readonly logger = new Logger(ExternalCallService.name);
 
-  async originateExternalCall(ari: Client, channelA: Channel, company: string) {
+  originateExternalCall(ari: Client, channelA: Channel, company: string) {
     this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
@@ -46,21 +46,24 @@ export class ExternalCallService {
       this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
     });
 
-    const callerId = await this.cacheControlService.getCompanyPhone(company);
+    const callerId = this.cacheControlService.getCompanyPhone(company);
     this.logger.debug(`Telefone da empresa: ${callerId}`);
     if (!callerId) {
       this.logger.warn(`Falta definir telefone da empresa: ${company}`);
       this.callAction.hangupChannel(channelA);
+      return;
     }
     const trunkName = this.configService.get('PABX_TRUNK');
     if (!trunkName) {
       this.logger.warn(`Falta definir trunk de saida: ${trunkName}`);
       this.callAction.hangupChannel(channelA);
+      return;
     }
     const techPrefix = this.configService.get('PABX_TECH_PREFIX');
     if (!techPrefix) {
       this.logger.warn(`Falta definir techPrefix: ${techPrefix}`);
       this.callAction.hangupChannel(channelA);
+      return;
     }
 
     channelB.once('ChannelDestroyed', (event, channel) => {

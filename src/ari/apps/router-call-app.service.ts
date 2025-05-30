@@ -4,7 +4,7 @@
  */
 
 import { Channel, Client, connect, StasisStart } from 'ari-client';
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ExternalCallService } from './external-call.service';
 import { InternalCallService } from './internal-call.service';
@@ -30,8 +30,8 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   private readonly logger = new Logger(RouterCallAppService.name);
 
   async onApplicationBootstrap() {
-    connect(this.configService.get('ARI_HOST')!, this.configService.get('ARI_USER')!, this.configService.get('ARI_PASS')!, (error, ari) => {
-      if (error) this.logger.error(`💣️ Erro ao conectar ao Asterisk ${error.message}`);
+    connect(this.configService.get('ARI_HOST')!, this.configService.get('ARI_USER')!, this.configService.get('ARI_PASS')!, (err, ari) => {
+      if (err) this.logger.error(`💣️ Erro ao conectar ao Asterisk ${err.message}`);
       ari.on('StasisStart', (stasisStartEvent: StasisStart, channel: Channel) => {
         this.stasisStart(stasisStartEvent, channel, ari);
       });
@@ -49,17 +49,34 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
   private async stasisStart(event: StasisStart, channel: Channel, ari: Client) {
     if (event.args.includes('dialed')) return;
+
     if (Array.isArray(event.args) && event.args.filter((arg) => arg.startsWith('record')).length > 0) {
       const recordName = event.args[0].split(' ')[1];
       this.callAction.recordChannel(channel, ari, recordName);
       return;
     }
+
+    try {
+      const userfieldVar = await channel.getChannelVar({
+        variable: 'CDR(userfield)',
+      });
+
+      if (userfieldVar.value === 'INBOUND') {
+        const company = this.companyCacheService.findCompanyByPhone(channel.dialplan.exten);
+        if (!company) throw new BadRequestException(`Não foi possível encontrar a empresa com o telefone ${channel.dialplan.exten}`);
+        this.callAllUsersService.callAllUsers(ari, channel, company);
+        return;
+      }
+    } catch (err) {
+      this.logger.error('Erro ao processar ligacao de entrada', err.message);
+      this.callAction.hangupChannel(channel);
+    }
+
     try {
       const companyVar = await channel.getChannelVar({
         variable: 'CDR(company)',
       });
       const company = companyVar.value;
-
       let callToken = '';
       try {
         const callTokenVar = await channel.getChannelVar({
@@ -72,16 +89,15 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
       this.logger.log(`Ligacao de ${channel.name} ${channel.caller.name} para ${channel.dialplan.exten} Empresa ${company} - token ${callToken}`);
 
-      if (!company) return;
-
       if (channel.dialplan.exten.length < 8) {
-        this.callAllUsersService.callAllUsers(ari, channel, company);
+        this.internalCallService.originateInternalCall(ari, channel);
         return;
       }
 
       this.externalCallService.originateExternalCall(ari, channel, company);
-    } catch (error) {
-      this.logger.error(`Erro ao processar inicio da chamada: ${error.message}`);
+    } catch (err) {
+      this.logger.error('Erro ao processar ligacao de saida', err.message);
+      this.callAction.hangupChannel(channel);
     }
   }
 }

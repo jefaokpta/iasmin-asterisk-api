@@ -1,15 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Cache } from 'cache-manager';
+import { Injectable } from '@nestjs/common';
 import { UserDto } from '../peer/dto/user.dto';
 
 @Injectable()
 export class UserCacheService {
-  constructor(
-    @Inject('CACHE_MANAGER')
-    private readonly cacheManager: Cache,
-  ) {}
+  private readonly userCache = new Map<string, UserDto[]>();
 
-  private readonly keyPrefix = 'user-';
+  constructor() {}
 
   loadUsers(users: UserDto[]) {
     const groupedUsers = users.reduce(
@@ -25,12 +21,12 @@ export class UserCacheService {
     );
 
     Object.entries(groupedUsers).forEach(([key, groupUsers]) => {
-      this.cacheManager.set(this.keyPrefix + key, groupUsers);
+      this.userCache.set(key, groupUsers);
     });
   }
 
-  async getUsersByControlNumber(controlNumber: string): Promise<UserDto[]> {
-    const users = await this.cacheManager.get<UserDto[]>(this.keyPrefix + controlNumber);
+  getUsersByControlNumber(controlNumber: string): UserDto[] {
+    const users = this.userCache.get(controlNumber);
     if (users) return users;
     return [];
   }

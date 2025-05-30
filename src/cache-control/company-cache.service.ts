@@ -1,31 +1,32 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Cache } from 'cache-manager';
+import { Injectable } from '@nestjs/common';
 import { Company } from '../companies/models/company';
 
 @Injectable()
 export class CompanyCacheService {
-  constructor(
-    @Inject('CACHE_MANAGER')
-    private readonly cacheManager: Cache,
-  ) {}
+  private readonly companyCache = new Map<string, Company>();
 
-  private readonly keyPrefix = 'company-';
+  constructor() {}
 
   loadCompanies(companies: Company[]) {
+    console.log(companies);
     companies.forEach((company) => this.setCompanyPhone(company));
+    console.log(this.companyCache);
   }
 
-  async getCompanyPhone(controlNumber: string): Promise<string | undefined> {
-    const phone = await this.cacheManager.get<string>(this.keyPrefix + controlNumber);
-    if (phone) return phone;
-    return undefined;
+  getCompanyPhone(controlNumber: string): string | undefined {
+    return this.companyCache.get(controlNumber)?.phone;
   }
 
   changeCompanyPhone(company: Company) {
     this.setCompanyPhone(company);
   }
 
+  findCompanyByPhone(phone: string): string | undefined {
+    const company = Array.from(this.companyCache.values()).find((company) => company.phone === phone);
+    return company?.controlNumber;
+  }
+
   private setCompanyPhone(company: Company) {
-    this.cacheManager.set(this.keyPrefix + company.controlNumber, company.phone.toString());
+    this.companyCache.set(company.controlNumber.toString(), company);
   }
 }

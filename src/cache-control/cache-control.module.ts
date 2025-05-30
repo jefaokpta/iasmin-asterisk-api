@@ -5,11 +5,9 @@
  */
 import { Module } from '@nestjs/common';
 import { CompanyCacheService } from './company-cache.service';
-import { CacheModule } from '@nestjs/cache-manager';
 import { UserCacheService } from './user-cache.service';
 
 @Module({
-  imports: [CacheModule.register()],
   providers: [CompanyCacheService, UserCacheService],
   exports: [CompanyCacheService, UserCacheService],
 })
