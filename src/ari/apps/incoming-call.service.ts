@@ -6,7 +6,7 @@
 import { CallActionService } from './util/call-action.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { UserCacheService } from '../../cache-control/user-cache.service';
-import { Channel, Client, Endpoint, StasisStart } from 'ari-client';
+import { Bridge, Channel, Client, Endpoint, StasisStart } from 'ari-client';
 
 @Injectable()
 export class IncomingCallService {
@@ -23,6 +23,7 @@ export class IncomingCallService {
     if (users.length === 0) {
       this.logger.warn('Não existe usuários da empresa: ' + company);
       this.callAction.hangupChannel(channelA);
+      return;
     }
     const peers = await this.getPeers(ari);
     const dialedUsers: Channel[] = [];
@@ -35,26 +36,9 @@ export class IncomingCallService {
       .forEach((user) => {
         const channelB = ari.Channel();
         dialedUsers.push(channelB);
-        channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
-          clearTimeout(dialTimeout);
-          this.cancelOthersDials(channel, dialedUsers);
-          this.logger.log(`Canal ${channel.name} atendeu a chamada de ${channelA.caller.number}`);
 
-          channelA.removeAllListeners('StasisEnd');
-          channelA.once('StasisEnd', (event, channel) => {
-            this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
-            this.callAction.hangupChannel(channelB);
-          });
+        channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => this.channelBAnswered(channelA, channel, dialedUsers, ari, dialTimeout));
 
-          channel.once('StasisEnd', (event, c) => {
-            this.logger.log(`Canal B ${c.id} finalizou a chamada`);
-            this.callAction.hangupChannel(channelA);
-            this.callAction.bridgeDestroy(bridge);
-          });
-          this.callAction.answerChannel(channelA);
-          const bridge = await this.callAction.createBridge(ari);
-          this.callAction.addChannesToBridge(bridge, [channelA, channel]);
-        });
         channelB
           .originate({
             endpoint: `PJSIP/${user.id.toString()}`,
@@ -67,6 +51,29 @@ export class IncomingCallService {
             this.callAction.hangupChannel(channelA);
           });
       });
+  }
+
+  private async channelBAnswered(channelA: Channel, channelB: Channel, dialedUsers: Channel[], ari: Client, dialTimeout: any) {
+    clearTimeout(dialTimeout);
+    this.cancelOthersDials(channelB, dialedUsers);
+    this.logger.log(`Canal ${channelB.name} atendeu a chamada de ${channelA.caller.number}`);
+    channelA.removeAllListeners('StasisEnd');
+    channelA.once('StasisEnd', (event, channel) => this.channelAHangup(channel, channelB));
+    channelB.once('StasisEnd', (event, channel) => this.channelBHangup(channelA, channel, bridge));
+    this.callAction.answerChannel(channelA);
+    const bridge = await this.callAction.createBridge(ari);
+    this.callAction.addChannesToBridge(bridge, [channelA, channelB]);
+  }
+
+  private channelBHangup(channelA: Channel, channelB: Channel, bridge: Bridge) {
+    this.logger.log(`Canal B ${channelB.id} finalizou a chamada`);
+    this.callAction.hangupChannel(channelA);
+    this.callAction.bridgeDestroy(bridge);
+  }
+
+  private channelAHangup(channelA: Channel, channelB: Channel) {
+    this.logger.log(`Canal A ${channelA.name} finalizou a chamada`);
+    this.callAction.hangupChannel(channelB);
   }
 
   private cancelOthersDials(channelAttendant: Channel, dialedUsers: Channel[]) {
