@@ -1,23 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { UserDto } from '../peer/dto/user.dto';
+import { User } from '../peer/user';
 
 @Injectable()
 export class UserCacheService {
-  private readonly userCache = new Map<string, UserDto[]>();
+  private readonly userCache = new Map<string, User[]>();
 
   constructor() {}
 
-  loadUsers(users: UserDto[]) {
+  loadUsers(users: User[]) {
     const groupedUsers = users.reduce(
       (acc, user) => {
-        const key = user.controlNumber.toString();
+        const key = user.controlNumber;
         if (!acc[key]) {
           acc[key] = [];
         }
         acc[key].push(user);
         return acc;
       },
-      {} as Record<string, UserDto[]>,
+      {} as Record<string, User[]>,
     );
 
     Object.entries(groupedUsers).forEach(([key, groupUsers]) => {
@@ -25,7 +25,7 @@ export class UserCacheService {
     });
   }
 
-  getUsersByControlNumber(controlNumber: string): UserDto[] {
+  getUsersByControlNumber(controlNumber: string): User[] {
     const users = this.userCache.get(controlNumber);
     if (users) return users;
     return [];

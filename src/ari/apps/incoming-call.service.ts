@@ -7,6 +7,7 @@ import { CallActionService } from './util/call-action.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { UserCacheService } from '../../cache-control/user-cache.service';
 import { Bridge, Channel, Client, Endpoint, StasisStart } from 'ari-client';
+import { User } from '../../peer/user';
 
 @Injectable()
 export class IncomingCallService {
@@ -30,27 +31,24 @@ export class IncomingCallService {
     const dialTimeout = this.callAction.dialTimeout(channelA);
     channelA.once('StasisEnd', () => this.hangupAllChannels(dialedUsers, dialTimeout));
     this.callAction.ringChannel(channelA);
-    users
-      .filter((user) => user.id.toString() !== channelA.caller.number)
-      .filter((user) => peers.find((peer) => peer.resource === user.id.toString() && peer.state === 'online'))
-      .forEach((user) => {
-        const channelB = ari.Channel();
-        dialedUsers.push(channelB);
+    this.filterFreeAndOfflineUsers(users, peers).forEach((user) => {
+      const channelB = ari.Channel();
+      dialedUsers.push(channelB);
 
-        channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => this.channelBAnswered(channelA, channel, dialedUsers, ari, dialTimeout));
+      channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => this.channelBAnswered(channelA, channel, dialedUsers, ari, dialTimeout));
 
-        channelB
-          .originate({
-            endpoint: `PJSIP/${user.id.toString()}`,
-            app: ariApp,
-            appArgs: 'dialed',
-            callerId: channelA.caller.number,
-          })
-          .catch((err) => {
-            this.logger.error('Erro ao originar chamada', err.message);
-            this.callAction.hangupChannel(channelA);
-          });
-      });
+      channelB
+        .originate({
+          endpoint: `PJSIP/${user.id.toString()}`,
+          app: ariApp,
+          appArgs: 'dialed',
+          callerId: channelA.caller.number,
+        })
+        .catch((err) => {
+          this.logger.error('Erro ao originar chamada', err.message);
+          this.callAction.hangupChannel(channelA);
+        });
+    });
   }
 
   private async channelBAnswered(channelA: Channel, channelB: Channel, dialedUsers: Channel[], ari: Client, dialTimeout: any) {
@@ -91,5 +89,11 @@ export class IncomingCallService {
 
   private getPeers(ari: Client): Promise<Endpoint[]> {
     return ari.endpoints.list();
+  }
+
+  private filterFreeAndOfflineUsers(users: User[], peers: Endpoint[]): User[] {
+    return users
+      .filter((user) => user.roles.length > 1)
+      .filter((user) => peers.find((peer) => peer.resource === user.id.toString() && peer.state === 'online'));
   }
 }

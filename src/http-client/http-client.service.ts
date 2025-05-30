@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { Company } from '../companies/models/company';
+import { Company } from '../companies/company';
 import { SecurityService } from '../security/security.service';
-import { UserDto } from '../peer/dto/user.dto';
+import { User } from '../peer/user';
 import * as https from 'https';
 
 @Injectable()
@@ -35,7 +35,7 @@ export class HttpClientService {
     }
   }
 
-  async getUsers(): Promise<UserDto[]> {
+  async getUsers(): Promise<User[]> {
     try {
       const response = await axios.get(`${this.BACKEND_API}/users`, {
         httpsAgent: new https.Agent({ timeout: this.HTTP_CONNECTION_TIMEOUT }),

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Company } from '../companies/models/company';
+import { Company } from '../companies/company';
 
 @Injectable()
 export class CompanyCacheService {

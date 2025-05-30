@@ -1,14 +1,13 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { PeerService } from './peer.service';
-import { UserDto } from './dto/user.dto';
+import { User } from './user';
 
 @Controller('peers')
 export class PeerController {
   constructor(private readonly peerService: PeerService) {}
 
   @Post()
-  writePeers(@Body() users: UserDto[]) {
+  writePeers(@Body() users: User[]) {
     this.peerService.writePeers(users);
   }
-  
 }

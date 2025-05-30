@@ -3,18 +3,18 @@ import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { UserDto } from './dto/user.dto';
+import { User } from './user';
 
 @Injectable()
 export class PeerWriter {
   constructor(private readonly configService: ConfigService) {}
 
-  async writePeers(users: UserDto[]) {
+  async writePeers(users: User[]) {
     const content = users.map((user) => this.generatePeerConfig(user)).join('\n');
     await writeFile(join(this.configService.get('ASTERISK_CONFIG')!, 'pjsip-peers.conf'), content);
   }
 
-  private generatePeerConfig(user: UserDto): string {
+  private generatePeerConfig(user: User): string {
     return `
 ;=============== ENDPOINT: ${user.id}
 [${user.id}]
@@ -54,7 +54,7 @@ md5_cred=${this.generatePassword(user)}
 `.trim();
   }
 
-  private generatePassword(user: UserDto): string {
+  private generatePassword(user: User): string {
     return createHash('md5').update(`${user.id}:asterisk:IASMIN_WEBPHONE_${user.id}`).digest('hex');
   }
 }
