@@ -9,17 +9,23 @@ export class CompanyCacheService {
     private readonly cacheManager: Cache,
   ) {}
 
+  private readonly keyPrefix = 'company-';
+
   loadCompanies(companies: Company[]) {
-    companies.forEach(c => this.cacheManager.set(c.controlNumber.toString(), c.phone.toString()));
+    companies.forEach((company) => this.setCompanyPhone(company));
   }
 
   async getCompanyPhone(controlNumber: string): Promise<string | undefined> {
-    const n = await this.cacheManager.get<string>(controlNumber);
-    if (n) return n;
+    const phone = await this.cacheManager.get<string>(this.keyPrefix + controlNumber);
+    if (phone) return phone;
     return undefined;
   }
 
   changeCompanyPhone(company: Company) {
-    this.cacheManager.set(company.controlNumber.toString(), company.phone.toString());
+    this.setCompanyPhone(company);
+  }
+
+  private setCompanyPhone(company: Company) {
+    this.cacheManager.set(this.keyPrefix + company.controlNumber, company.phone.toString());
   }
 }

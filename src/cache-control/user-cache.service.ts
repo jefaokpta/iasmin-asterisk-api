@@ -9,6 +9,8 @@ export class UserCacheService {
     private readonly cacheManager: Cache,
   ) {}
 
+  private readonly keyPrefix = 'user-';
+
   loadUsers(users: UserDto[]) {
     const groupedUsers = users.reduce(
       (acc, user) => {
@@ -23,12 +25,12 @@ export class UserCacheService {
     );
 
     Object.entries(groupedUsers).forEach(([key, groupUsers]) => {
-      this.cacheManager.set(key, groupUsers);
+      this.cacheManager.set(this.keyPrefix + key, groupUsers);
     });
   }
 
   async getUsersByControlNumber(controlNumber: string): Promise<UserDto[]> {
-    const users = await this.cacheManager.get<UserDto[]>(controlNumber);
+    const users = await this.cacheManager.get<UserDto[]>(this.keyPrefix + controlNumber);
     if (users) return users;
     return [];
   }
