@@ -38,7 +38,7 @@ export class CallAllUsersService {
         channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
           clearTimeout(dialTimeout);
           this.cancelOthersDials(channel, dialedUsers);
-          this.logger.debug(`Canal ${channel.name} atendeu a chamada de ${channelA.caller.number}`);
+          this.logger.log(`Canal ${channel.name} atendeu a chamada de ${channelA.caller.number}`);
 
           channelA.removeAllListeners('StasisEnd');
           channelA.once('StasisEnd', (event, channel) => {
@@ -78,7 +78,6 @@ export class CallAllUsersService {
   }
 
   private hangupAllChannels(dialedUsers: Channel[], dialTimeout: any) {
-    this.logger.debug(`desligando todos`);
     clearTimeout(dialTimeout);
     dialedUsers.forEach((channel) => this.callAction.hangupChannel(channel));
   }

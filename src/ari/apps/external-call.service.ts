@@ -34,6 +34,7 @@ export class ExternalCallService {
       clearTimeout(dialTimeout);
       this.callAction.answerChannel(channelA);
       const bridgeMain = await this.callAction.createBridge(ari);
+      channel.removeAllListeners('ChannelDestroyed');
       channel.once('StasisEnd', (event, c) => {
         this.logger.log(`Canal B ${c.id} finalizou a chamada`);
         this.callAction.hangupChannel(channelA);
@@ -46,6 +47,7 @@ export class ExternalCallService {
     });
 
     const callerId = await this.cacheControlService.getCompanyPhone(company);
+    this.logger.debug(`Telefone da empresa: ${callerId}`);
     if (!callerId) {
       this.logger.warn(`Falta definir telefone da empresa: ${company}`);
       this.callAction.hangupChannel(channelA);
@@ -60,6 +62,12 @@ export class ExternalCallService {
       this.logger.warn(`Falta definir techPrefix: ${techPrefix}`);
       this.callAction.hangupChannel(channelA);
     }
+
+    channelB.once('ChannelDestroyed', (event, channel) => {
+      this.logger.log(`Canal B ${channel.name} cancelou a chamada`);
+      this.callAction.hangupChannel(channelA);
+    });
+
     channelB.originate(
       {
         endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
