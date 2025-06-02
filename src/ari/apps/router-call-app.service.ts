@@ -72,7 +72,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       let callToken = '';
       try {
         const callTokenVar = await channel.getChannelVar({
-          variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)',
+          variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)', //TODO: X-CALL-TOKEN de 5s
         });
         callToken = callTokenVar.value;
       } catch (error) {
