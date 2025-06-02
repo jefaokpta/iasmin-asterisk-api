@@ -63,13 +63,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   }
 
   private async outboundStasisStart(event: StasisStart, channel: Channel, ari: Client, ariApp = 'outbound-router-call-app') {
-    if (event.args.includes('dialed')) return;
-
-    if (Array.isArray(event.args) && event.args.filter((arg) => arg.startsWith('record')).length > 0) {
-      const recordName = event.args[0].split(' ')[1];
-      this.callAction.recordChannel(channel, ari, recordName);
-      return;
-    }
+    if (this.initialStasisStartCheck(event, channel, ari)) return;
 
     try {
       channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
@@ -104,7 +98,8 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   }
 
   private inboundStasisStart(event: StasisStart, channel: Channel, ari: Client, ariApp = 'inbound-router-call-app') {
-    if (event.args.includes('dialed')) return;
+    if (this.initialStasisStartCheck(event, channel, ari)) return;
+
     this.logger.log(`Ligacao de entrada ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten}`);
 
     try {
@@ -115,5 +110,17 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       this.logger.error('Erro ao processar ligacao de entrada', err.message);
       this.callAction.hangupChannel(channel);
     }
+  }
+
+  private initialStasisStartCheck(event: StasisStart, channel: Channel, ari: Client): boolean {
+    if (event.args.includes('dialed')) return true;
+
+    if (Array.isArray(event.args) && event.args.filter((arg) => arg.startsWith('record')).length > 0) {
+      const recordName = event.args[0].split(' ')[1];
+      this.callAction.recordChannel(channel, ari, recordName);
+      return true;
+    }
+
+    return false;
   }
 }
