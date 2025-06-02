@@ -78,11 +78,13 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       let callToken = '';
       try {
         const callTokenVar = await channel.getChannelVar({
-          variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)', //TODO: tornar obrigatorio
+          variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)',
         });
         callToken = callTokenVar.value;
       } catch (error) {
-        this.logger.warn(`Não foi possível obter X-CALL-TOKEN: ${error.message}`);
+        this.logger.warn(`Webphone invalido - Não foi possível obter X-CALL-TOKEN: ${error.message}`);
+        this.callAction.hangupChannel(channel);
+        return;
       }
 
       this.logger.log(
@@ -90,11 +92,11 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       );
 
       if (channel.dialplan.exten.length < 8) {
-        this.internalCallService.originateInternalCall(ari, channel, ariApp);
+        this.internalCallService.internalCall(ari, channel, ariApp);
         return;
       }
 
-      this.externalCallService.originateExternalCall(ari, channel, company, ariApp);
+      this.externalCallService.externalCall(ari, channel, company, ariApp);
     } catch (err) {
       this.logger.error('Erro ao processar ligacao de saida', err.message);
       this.callAction.hangupChannel(channel);
@@ -102,6 +104,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   }
 
   private inboundStasisStart(event: StasisStart, channel: Channel, ari: Client, ariApp = 'inbound-router-call-app') {
+    if (event.args.includes('dialed')) return;
     this.logger.log(`Ligacao de entrada ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten}`);
 
     try {

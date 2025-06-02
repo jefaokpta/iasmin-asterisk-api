@@ -20,7 +20,7 @@ export class ExternalCallService {
 
   private readonly logger = new Logger(ExternalCallService.name);
 
-  originateExternalCall(ari: Client, channelA: Channel, company: string, ariApp: string) {
+  externalCall(ari: Client, channelA: Channel, company: string, ariApp: string) {
     this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);

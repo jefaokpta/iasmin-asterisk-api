@@ -5,8 +5,6 @@
 import { Channel, Client, StasisStart } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
 import { CallActionService } from './util/call-action.service';
-import { ChannelLeg } from './util/enus/channel-leg.enum';
-import { recordName } from './util/utils';
 
 @Injectable()
 export class InternalCallService {
@@ -14,7 +12,7 @@ export class InternalCallService {
 
   private readonly logger = new Logger(InternalCallService.name);
 
-  async originateInternalCall(ari: Client, channelA: Channel, ariApp: string) {
+  async internalCall(ari: Client, channelA: Channel, ariApp: string) {
     this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
@@ -33,10 +31,7 @@ export class InternalCallService {
         this.callAction.hangupChannel(channelA);
         this.callAction.bridgeDestroy(bridgeMain);
       });
-      this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
-      this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B), ariApp);
       this.callAction.addChannesToBridge(bridgeMain, [channelA, channel]);
-      this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
     });
 
     channelB
