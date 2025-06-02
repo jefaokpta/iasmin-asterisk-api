@@ -28,6 +28,7 @@ export class ExternalCallService {
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
       this.callAction.hangupChannel(channelB);
+      clearTimeout(dialTimeout);
     });
 
     channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {

@@ -12,7 +12,7 @@ export class InternalCallService {
 
   private readonly logger = new Logger(InternalCallService.name);
 
-  async internalCall(ari: Client, channelA: Channel, ariApp: string) {
+  internalCall(ari: Client, channelA: Channel, ariApp: string) {
     this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
