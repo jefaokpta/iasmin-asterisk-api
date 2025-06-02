@@ -8,6 +8,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { UserCacheService } from '../../cache-control/user-cache.service';
 import { Bridge, Channel, Client, Endpoint, StasisStart } from 'ari-client';
 import { User } from '../../peer/user';
+import { recordName } from './util/utils';
+import { ChannelLeg } from './util/enus/channel-leg.enum';
 
 @Injectable()
 export class IncomingCallService {
@@ -35,7 +37,9 @@ export class IncomingCallService {
       const channelB = ari.Channel();
       dialedUsers.push(channelB);
 
-      channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => this.channelBAnswered(channelA, channel, dialedUsers, ari, dialTimeout));
+      channelB.once('StasisStart', async (event: StasisStart, channel: Channel) =>
+        this.channelBAnswered(channelA, channel, dialedUsers, ari, dialTimeout, ariApp),
+      );
 
       channelB
         .originate({
@@ -51,16 +55,19 @@ export class IncomingCallService {
     });
   }
 
-  private async channelBAnswered(channelA: Channel, channelB: Channel, dialedUsers: Channel[], ari: Client, dialTimeout: any) {
-    clearTimeout(dialTimeout);
-    this.cancelOthersDials(channelB, dialedUsers);
+  private async channelBAnswered(channelA: Channel, channelB: Channel, dialedUsers: Channel[], ari: Client, dialTimeout: any, ariApp: string) {
     this.logger.log(`Canal ${channelB.name} atendeu a chamada de ${channelA.caller.number}`);
+    const bridge = await this.callAction.createBridge(ari);
     channelA.removeAllListeners('StasisEnd');
     channelA.once('StasisEnd', (event, channel) => this.channelAHangup(channel, channelB));
     channelB.once('StasisEnd', (event, channel) => this.channelBHangup(channelA, channel, bridge));
+    clearTimeout(dialTimeout);
+    this.cancelOthersDials(channelB, dialedUsers);
     this.callAction.answerChannel(channelA);
-    const bridge = await this.callAction.createBridge(ari);
+    this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
+    this.callAction.createSnoopChannelAndRecord(channelB, recordName(channelA.id, ChannelLeg.B), ariApp);
     this.callAction.addChannesToBridge(bridge, [channelA, channelB]);
+    this.callAction.recordBridge(bridge, ari, recordName(channelA.id, ChannelLeg.MIXED));
   }
 
   private channelBHangup(channelA: Channel, channelB: Channel, bridge: Bridge) {
