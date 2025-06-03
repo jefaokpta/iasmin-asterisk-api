@@ -10,6 +10,7 @@ import { Bridge, Channel, Client, Endpoint, StasisStart } from 'ari-client';
 import { User } from '../../peer/user';
 import { recordName } from './util/utils';
 import { ChannelLeg } from './util/enus/channel-leg.enum';
+import { CompanyCacheService } from '../../cache-control/company-cache.service';
 
 @Injectable()
 export class IncomingCallService {
@@ -18,11 +19,12 @@ export class IncomingCallService {
   constructor(
     private readonly callAction: CallActionService,
     private readonly userCacheService: UserCacheService,
+    private readonly companyCacheService: CompanyCacheService,
   ) {}
 
   async callAllUsers(ari: Client, channelA: Channel, company: string, ariApp: string) {
     this.logger.log('Chamando todos os usuários da empresa: ' + company);
-    const users = this.userCacheService.getUsersByControlNumber(company);
+    const users = this.defineAttendants(company);
     if (users.length === 0) {
       this.logger.warn('Não existe usuários da empresa: ' + company);
       this.callAction.hangupChannel(channelA);
@@ -53,6 +55,14 @@ export class IncomingCallService {
           this.callAction.hangupChannel(channelA);
         });
     });
+  }
+
+  private defineAttendants(controlNumber: string): User[] {
+    const attendants = this.companyCacheService.findAttendants(controlNumber);
+    if (attendants.length > 0) {
+      return this.userCacheService.getUsersByControlNumber(controlNumber).filter((user) => attendants.find((attendant) => attendant === user.id.toString()));
+    }
+    return this.userCacheService.getUsersByControlNumber(controlNumber);
   }
 
   private async channelBAnswered(channelA: Channel, channelB: Channel, dialedUsers: Channel[], ari: Client, dialTimeout: any, ariApp: string) {

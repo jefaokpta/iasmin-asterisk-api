@@ -24,6 +24,12 @@ export class CompanyCacheService {
     return company?.controlNumber;
   }
 
+  findAttendants(controlNumber: string): string[] {
+    const company = this.companyCache.get(controlNumber);
+    if (!company) return [];
+    return company.attendantCallUsers;
+  }
+
   private setCompanyPhone(company: Company) {
     this.companyCache.set(company.controlNumber.toString(), company);
   }
