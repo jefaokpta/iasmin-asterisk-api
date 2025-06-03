@@ -3,7 +3,7 @@
  * @email jefaokpta@hotmail.com
  * @create 4/3/25
  */
-import { IsNumberString } from 'class-validator';
+import { IsArray, IsNumberString } from 'class-validator';
 
 export class Company {
   @IsNumberString()
@@ -11,4 +11,7 @@ export class Company {
 
   @IsNumberString()
   readonly phone: string;
+
+  @IsArray()
+  readonly attendantCallUsers: string[];
 }
