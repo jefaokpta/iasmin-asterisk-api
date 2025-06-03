@@ -8,12 +8,14 @@ import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { Cdr } from '../models/cdr';
 import { execSync } from 'node:child_process';
+import { UtilService } from '../../utils/util.service';
 
 @Injectable()
 export class CdrService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly utilsService: UtilService,
   ) {}
 
   private readonly logger = new Logger(CdrService.name);
@@ -27,6 +29,10 @@ export class CdrService {
       const cdrUpdated = { ...cdr, callRecord: this.createRecordFileName(cdr) };
       await this.convertAudioToMp3(cdrUpdated);
       this.sendCdrToBackend(cdrUpdated);
+      return;
+    }
+    if (!cdr.peer && cdr.userfield === 'INBOUND') {
+      this.utilsService.defineAttendants(cdr.company).forEach((user) => this.sendCdrToBackend({ ...cdr, peer: user.id.toString() }));
       return;
     }
     this.sendCdrToBackend(cdr);
@@ -51,8 +57,8 @@ export class CdrService {
         timeout: this.HTTP_REQUEST_TIMEOUT,
       }),
     )
-      .then(response => this.logger.log(`CDR enviada com sucesso! ${cdr.channel} ${response.data}`))
-      .catch(e => {
+      .then((response) => this.logger.log(`CDR enviada com sucesso! ${cdr.channel} ${response.data}`))
+      .catch((e) => {
         this.logger.error(e.message);
         if (e.response?.data) {
           this.logger.error(e.response.data.message);

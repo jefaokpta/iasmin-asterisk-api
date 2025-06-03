@@ -6,9 +6,10 @@ import { CallActionService } from './apps/util/call-action.service';
 import { HttpClientModule } from '../http-client/http-client.module';
 import { CacheControlModule } from '../cache-control/cache-control.module';
 import { IncomingCallService } from './apps/incoming-call.service';
+import { UtilModule } from '../utils/util.module';
 
 @Module({
-  imports: [HttpClientModule, CacheControlModule],
+  imports: [HttpClientModule, CacheControlModule, UtilModule],
   providers: [RouterCallAppService, ExternalCallService, InternalCallService, CallActionService, IncomingCallService],
 })
 export class AriModule {}

@@ -105,6 +105,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     try {
       channel.setChannelVar({ variable: 'CDR(userfield)', value: 'INBOUND' });
       const company = this.companyCacheService.findCompanyByPhone(channel.dialplan.exten);
+      channel.setChannelVar({ variable: 'CDR(company)', value: company });
       this.incomingCallService.callAllUsers(ari, channel, company!, ariApp);
     } catch (err) {
       this.logger.error('Erro ao processar ligacao de entrada', err.message);
