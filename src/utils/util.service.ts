@@ -18,8 +18,11 @@ export class UtilService {
   defineAttendants(controlNumber: string): User[] {
     const attendants = this.companyCacheService.findAttendants(controlNumber);
     if (attendants.length > 0) {
-      return this.userCacheService.getUsersByControlNumber(controlNumber).filter((user) => attendants.find((attendant) => attendant === user.id.toString()));
+      return this.userCacheService
+        .getUsersByControlNumber(controlNumber)
+        .filter((user) => attendants.find((attendant) => attendant === user.id.toString()))
+        .filter((user) => user.roles.length > 1);
     }
-    return this.userCacheService.getUsersByControlNumber(controlNumber);
+    return this.userCacheService.getUsersByControlNumber(controlNumber).filter((user) => user.roles.length > 1);
   }
 }
