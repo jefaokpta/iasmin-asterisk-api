@@ -13,6 +13,7 @@ import { CompanyCacheService } from '../../cache-control/company-cache.service';
 import { CallActionService } from './util/call-action.service';
 import { UserCacheService } from '../../cache-control/user-cache.service';
 import { IncomingCallService } from './incoming-call.service';
+import { SecurityService } from '../../security/security.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
@@ -25,6 +26,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     private readonly userCacheService: UserCacheService,
     private readonly callAction: CallActionService,
     private readonly incomingCallService: IncomingCallService,
+    private readonly securityService: SecurityService,
   ) {}
 
   private readonly logger = new Logger(RouterCallAppService.name);
