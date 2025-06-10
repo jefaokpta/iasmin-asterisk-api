@@ -1,11 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class SecurityService {
   constructor(private readonly jwtService: JwtService) {}
-
-  private readonly logger = new Logger(SecurityService.name);
 
   generateToken(): string {
     return this.jwtService.sign({
@@ -14,11 +12,7 @@ export class SecurityService {
   }
 
   validateToken(token: string) {
-    try {
-      this.jwtService.verify(token);
-    } catch (error) {
-      this.logger.error(`Erro ao validar token: ${error}`);
-    }
+    this.jwtService.verify(token);
   }
 }
 

@@ -73,8 +73,8 @@ export class RouterCallAppService implements OnApplicationBootstrap {
           variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)',
         });
         this.securityService.validateToken(callTokenVar.value);
-      } catch (error) {
-        this.logger.warn(`Webphone inválido - Não foi possível obter X-CALL-TOKEN: ${error.message}`);
+      } catch (err) {
+        this.logger.warn(`Webphone inválido - Não foi possível obter X-CALL-TOKEN: ${err.message}`);
         this.callAction.hangupChannel(channel);
         return;
       }
