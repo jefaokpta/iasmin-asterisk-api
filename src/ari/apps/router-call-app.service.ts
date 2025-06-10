@@ -73,7 +73,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       });
       this.securityService.validateToken(callTokenVar.value);
 
-      channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
+      await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
       const companyVar = await channel.getChannelVar({ variable: 'CDR(company)' });
       const company = companyVar.value;
       this.logger.log(`Ligacao de ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} Empresa ${company}`);
@@ -90,15 +90,15 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     }
   }
 
-  private inboundStasisStart(event: StasisStart, channel: Channel, ari: Client, ariApp = 'inbound-router-call-app') {
+  private async inboundStasisStart(event: StasisStart, channel: Channel, ari: Client, ariApp = 'inbound-router-call-app') {
     if (this.initialStasisStartCheck(event, channel, ari)) return;
 
     this.logger.log(`Ligacao de entrada ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten}`);
 
     try {
-      channel.setChannelVar({ variable: 'CDR(userfield)', value: 'INBOUND' });
+      await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'INBOUND' });
       const company = this.companyCacheService.findCompanyByPhone(channel.dialplan.exten);
-      channel.setChannelVar({ variable: 'CDR(company)', value: company });
+      await channel.setChannelVar({ variable: 'CDR(company)', value: company });
       this.incomingCallService.callAllUsers(ari, channel, company!, ariApp);
     } catch (err) {
       this.logger.error('Erro ao processar ligacao de entrada', err.message);
