@@ -68,16 +68,10 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     if (this.initialStasisStartCheck(event, channel, ari)) return;
 
     try {
-      try {
-        const callTokenVar = await channel.getChannelVar({
-          variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)',
-        });
-        this.securityService.validateToken(callTokenVar.value);
-      } catch (err) {
-        this.logger.warn(`Webphone inválido - Não foi possível obter X-CALL-TOKEN: ${err.message}`);
-        this.callAction.hangupChannel(channel);
-        return;
-      }
+      const callTokenVar = await channel.getChannelVar({
+        variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)',
+      });
+      this.securityService.validateToken(callTokenVar.value);
 
       channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
       const companyVar = await channel.getChannelVar({ variable: 'CDR(company)' });
@@ -91,7 +85,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
       this.externalCallService.externalCall(ari, channel, company, ariApp);
     } catch (err) {
-      this.logger.error('Erro ao processar ligacao de saida', err.message);
+      this.logger.error('Erro ao processar ligação de saida', err.message);
       this.callAction.hangupChannel(channel);
     }
   }
