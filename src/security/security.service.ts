@@ -13,13 +13,11 @@ export class SecurityService {
     });
   }
 
-  validateToken(token: string): boolean {
+  validateToken(token: string) {
     try {
       this.jwtService.verify(token);
-      return true;
     } catch (error) {
       this.logger.error(`Erro ao validar token: ${error}`);
-      return false;
     }
   }
 }

@@ -68,24 +68,21 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     if (this.initialStasisStartCheck(event, channel, ari)) return;
 
     try {
-      channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
-      const companyVar = await channel.getChannelVar({ variable: 'CDR(company)' });
-      const company = companyVar.value;
-      let callToken = '';
       try {
         const callTokenVar = await channel.getChannelVar({
-          variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)', //TODO: X-CALL-TOKEN de 5s
+          variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)',
         });
-        callToken = callTokenVar.value;
+        this.securityService.validateToken(callTokenVar.value);
       } catch (error) {
-        this.logger.warn(`Webphone invalido - Não foi possível obter X-CALL-TOKEN: ${error.message}`);
+        this.logger.warn(`Webphone inválido - Não foi possível obter X-CALL-TOKEN: ${error.message}`);
         this.callAction.hangupChannel(channel);
         return;
       }
 
-      this.logger.log(
-        `Ligacao de ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} Empresa ${company} - token ${callToken}`,
-      );
+      channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
+      const companyVar = await channel.getChannelVar({ variable: 'CDR(company)' });
+      const company = companyVar.value;
+      this.logger.log(`Ligacao de ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} Empresa ${company}`);
 
       if (channel.dialplan.exten.length < 8) {
         this.internalCallService.internalCall(ari, channel, ariApp);
