@@ -38,9 +38,9 @@ export class ExternalCallService {
       this.callAction.hangupChannel(channelA);
       return;
     }
-
+    const endpoint = `PJSIP/${techPrefix}#${channelA.dialplan.exten}@${trunkName}`;
     const channelB = await channelA.create({
-      endpoint: `PJSIP/${techPrefix}\#${channelA.dialplan.exten}@${trunkName}`,
+      endpoint,
       app: ariApp,
       appArgs: 'dialed',
     });
