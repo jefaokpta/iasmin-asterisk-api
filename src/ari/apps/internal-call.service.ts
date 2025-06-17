@@ -34,13 +34,8 @@ export class InternalCallService {
     });
 
     channelB.on('ChannelStateChange', (event, channel) => {
-      this.logger.debug(`Channel ${channel.name} changed state to ${channel.state}`);
-      if (channel.state === 'Ringing') {
-        this.callAction.ringChannel(channelA);
-      }
+      if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
     });
-
-    this.logger.debug(`estado inicial do channelB: ${channelB.state}`);
 
     channelB
       .originate({
