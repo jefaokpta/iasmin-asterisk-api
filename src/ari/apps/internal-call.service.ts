@@ -43,6 +43,7 @@ export class InternalCallService {
         app: ariApp,
         appArgs: 'dialed',
         callerId: channelA.caller.number,
+        originator: channelA.id,
       })
       .catch((err) => {
         this.logger.error(`Erro ao originar chamada ${channelA.name}`, err.message);
