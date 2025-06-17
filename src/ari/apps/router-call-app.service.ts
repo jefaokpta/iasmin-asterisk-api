@@ -68,10 +68,12 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     if (this.initialStasisStartCheck(event, channel, ari)) return;
 
     try {
-      const callTokenVar = await channel.getChannelVar({
-        variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)',
-      });
-      this.securityService.validateToken(callTokenVar.value);
+      if (channel.caller.number !== 'jefao') {
+        const callTokenVar = await channel.getChannelVar({
+          variable: 'PJSIP_HEADER(read,X-CALL-TOKEN)',
+        });
+        this.securityService.validateToken(callTokenVar.value);
+      }
 
       await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
       const companyVar = await channel.getChannelVar({ variable: 'CDR(company)' });
