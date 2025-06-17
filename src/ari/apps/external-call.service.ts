@@ -7,8 +7,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CallActionService } from './util/call-action.service';
 import { CompanyCacheService } from '../../cache-control/company-cache.service';
-import { recordName } from './util/utils';
-import { ChannelLeg } from './util/enus/channel-leg.enum';
 
 @Injectable()
 export class ExternalCallService {
@@ -62,16 +60,17 @@ export class ExternalCallService {
     });
 
     channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
+      this.logger.log(`Canal B ${channel.name} entrou no app de ${channelA.caller.number}`);
       // clearTimeout(dialTimeout);
-      this.callAction.answerChannel(channelA);
-      channel.removeAllListeners('ChannelDestroyed');
-      channel.once('StasisEnd', (event, c) => {
-        this.logger.log(`Canal B ${c.id} finalizou a chamada`);
-        this.callAction.hangupChannel(channelA);
-      });
-      this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
-      this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B), ariApp);
-      this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
+      // this.callAction.answerChannel(channelA);
+      // channel.removeAllListeners('ChannelDestroyed');
+      // channel.once('StasisEnd', (event, c) => {
+      //   this.logger.log(`Canal B ${c.id} finalizou a chamada`);
+      //   this.callAction.hangupChannel(channelA);
+      // });
+      // this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
+      // this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B), ariApp);
+      // this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
     });
 
     channelB.once('ChannelDestroyed', (event, channel) => {
