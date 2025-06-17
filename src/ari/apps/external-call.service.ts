@@ -47,7 +47,6 @@ export class ExternalCallService {
     await channelA.setChannelVar({ variable: 'CALLERID(all)', value: callerId });
     await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,P-Asserted-Identity)', value: company });
 
-    // const dialTimeout = this.callAction.dialTimeout(channelA);
     const bridgeMain = await this.callAction.createBridge(ari);
     await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
 
@@ -55,11 +54,11 @@ export class ExternalCallService {
       this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
       this.callAction.bridgeDestroy(bridgeMain);
       this.callAction.hangupChannel(channelB);
-      // clearTimeout(dialTimeout);
     });
 
     channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
       this.logger.log(`Canal B ${channel.name} entrou no app de ${channelA.caller.number}`);
+      this.callAction.answerChannel(channelA);
       // clearTimeout(dialTimeout);
       // this.callAction.answerChannel(channelA);
       // channel.removeAllListeners('ChannelDestroyed');
@@ -90,23 +89,5 @@ export class ExternalCallService {
         this.logger.error(`Erro ao discar pra channel B ${trunkName}`, err.message);
         this.callAction.hangupChannel(channelA);
       });
-
-    // channelB.originate(
-    //   {
-    //     endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
-    //     app: ariApp,
-    //     appArgs: 'dialed',
-    //     callerId,
-    //     variables: {
-    //       'PJSIP_HEADER(add,P-Asserted-Identity)': company,
-    //     },
-    //   },
-    //   (err) => {
-    //     if (err) {
-    //       this.logger.error(`Erro ao originar channel B ${trunkName}`, err.message);
-    //       this.callAction.hangupChannel(channelA);
-    //     }
-    //   },
-    // );
   }
 }
