@@ -44,7 +44,7 @@ export class ExternalCallService {
       appArgs: 'dialed',
     });
 
-    await channelB.setChannelVar({ variable: 'CALLERID(all)', value: `${callerId} < ${callerId} >` });
+    channelB.caller = { name: callerId, number: callerId };
     await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,P-Asserted-Identity)', value: company });
 
     // const dialTimeout = this.callAction.dialTimeout(channelA);
@@ -82,7 +82,7 @@ export class ExternalCallService {
     // });
 
     channelB
-      .dial({ timeout: 30_000 })
+      .dial({ timeout: 30 })
       .then(() => {
         this.logger.debug('discado com sucesso');
       })
