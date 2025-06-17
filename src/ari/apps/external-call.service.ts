@@ -20,12 +20,15 @@ export class ExternalCallService {
 
   private readonly logger = new Logger(ExternalCallService.name);
 
-  externalCall(ari: Client, channelA: Channel, company: string, ariApp: string) {
+  async externalCall(ari: Client, channelA: Channel, company: string, ariApp: string) {
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
+    const bridgeMain = await this.callAction.createBridge(ari);
+    this.callAction.addChannesToBridge(bridgeMain, [channelA, channelB]);
 
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
+      this.callAction.bridgeDestroy(bridgeMain);
       this.callAction.hangupChannel(channelB);
       clearTimeout(dialTimeout);
     });
@@ -33,16 +36,13 @@ export class ExternalCallService {
     channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
       clearTimeout(dialTimeout);
       this.callAction.answerChannel(channelA);
-      const bridgeMain = await this.callAction.createBridge(ari);
       channel.removeAllListeners('ChannelDestroyed');
       channel.once('StasisEnd', (event, c) => {
         this.logger.log(`Canal B ${c.id} finalizou a chamada`);
         this.callAction.hangupChannel(channelA);
-        this.callAction.bridgeDestroy(bridgeMain);
       });
       this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
       this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B), ariApp);
-      this.callAction.addChannesToBridge(bridgeMain, [channelA, channel]);
       this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
     });
 

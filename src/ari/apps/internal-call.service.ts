@@ -42,8 +42,7 @@ export class InternalCallService {
         endpoint: `PJSIP/jefao`,
         app: ariApp,
         appArgs: 'dialed',
-        callerId: channelA.caller.number,
-        originator: channelA.id,
+        callerId: `${channelA.caller.name} <${channelA.caller.number}>`,
       })
       .catch((err) => {
         this.logger.error(`Erro ao originar chamada ${channelA.name}`, err.message);
