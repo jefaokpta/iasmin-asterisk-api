@@ -14,6 +14,7 @@ export class InternalCallService {
 
   internalCall(ari: Client, channelA: Channel, ariApp: string) {
     // this.callAction.ringChannel(channelA); // nao enviar ring teste
+    this.callAction.answerChannel(channelA); //teste atendendo
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
 
