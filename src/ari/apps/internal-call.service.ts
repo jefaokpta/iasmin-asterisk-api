@@ -13,8 +13,7 @@ export class InternalCallService {
   private readonly logger = new Logger(InternalCallService.name);
 
   internalCall(ari: Client, channelA: Channel, ariApp: string) {
-    // this.callAction.ringChannel(channelA); // nao enviar ring teste
-    this.callAction.answerChannel(channelA); //teste atendendo
+    this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
 
@@ -34,6 +33,8 @@ export class InternalCallService {
       });
       this.callAction.addChannesToBridge(bridgeMain, [channelA, channel]);
     });
+
+    channelB.on('ChannelStateChange', (event, channel) => console.log(`Channel ${channel.name} changed state to ${channel.state}`, event));
 
     channelB
       .originate({
