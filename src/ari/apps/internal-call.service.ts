@@ -13,7 +13,7 @@ export class InternalCallService {
   private readonly logger = new Logger(InternalCallService.name);
 
   internalCall(ari: Client, channelA: Channel, ariApp: string) {
-    this.callAction.ringChannel(channelA);
+    // this.callAction.ringChannel(channelA); // nao enviar ring teste
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
 
@@ -36,7 +36,7 @@ export class InternalCallService {
 
     channelB
       .originate({
-        endpoint: `PJSIP/${channelA.dialplan.exten}`,
+        endpoint: `PJSIP/jefao`,
         app: ariApp,
         appArgs: 'dialed',
         callerId: channelA.caller.number,
