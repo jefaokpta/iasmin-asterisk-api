@@ -44,7 +44,7 @@ export class ExternalCallService {
       appArgs: 'dialed',
     });
 
-    channelB.caller = { name: callerId, number: callerId };
+    channelA.caller = { name: callerId, number: callerId };
     await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,P-Asserted-Identity)', value: company });
 
     // const dialTimeout = this.callAction.dialTimeout(channelA);
