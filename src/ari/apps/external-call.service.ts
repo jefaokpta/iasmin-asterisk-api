@@ -21,7 +21,6 @@ export class ExternalCallService {
   private readonly logger = new Logger(ExternalCallService.name);
 
   externalCall(ari: Client, channelA: Channel, company: string, ariApp: string) {
-    this.callAction.ringChannel(channelA);
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
 
@@ -70,6 +69,10 @@ export class ExternalCallService {
     channelB.once('ChannelDestroyed', (event, channel) => {
       this.logger.log(`Canal B ${channel.name} cancelou a chamada`);
       this.callAction.hangupChannel(channelA);
+    });
+
+    channelB.on('ChannelStateChange', (event, channel) => {
+      if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
     });
 
     channelB.originate(
