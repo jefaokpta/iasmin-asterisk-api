@@ -48,10 +48,13 @@ export class CallActionService {
     bridge.destroy().catch((err) => this.logger.error(`Erro ao destruir bridge ${bridge.id}`, err.message));
   }
 
-  addChannesToBridge(bridge: Bridge, channels: Channel[]) {
+  addChannelsToBridge(bridge: Bridge, channels: Channel[]) {
     bridge
       .addChannel({ channel: channels.map((c) => c.id) })
       .catch((err) => this.logger.error(`Erro ao adicionar canais ${channels[0].name} à bridge ${bridge.id}`, err.message));
+  }
+  async addChannelsToBridgeAsync(bridge: Bridge, channels: Channel[]) {
+    await bridge.addChannel({ channel: channels.map((c) => c.id) });
   }
 
   createSnoopChannelAndRecord(targetChannel: Channel, recordName: string, ariApp: string) {

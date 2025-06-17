@@ -24,8 +24,7 @@ export class ExternalCallService {
     const channelB = ari.Channel();
     const dialTimeout = this.callAction.dialTimeout(channelA);
     const bridgeMain = await this.callAction.createBridge(ari);
-    this.callAction.addChannesToBridge(bridgeMain, [channelA, channelB]);
-    this.callAction.answerChannel(channelA); //remover
+    await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
 
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
@@ -36,7 +35,7 @@ export class ExternalCallService {
 
     channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
       clearTimeout(dialTimeout);
-
+      this.callAction.answerChannel(channelA);
       channel.removeAllListeners('ChannelDestroyed');
       channel.once('StasisEnd', (event, c) => {
         this.logger.log(`Canal B ${c.id} finalizou a chamada`);
