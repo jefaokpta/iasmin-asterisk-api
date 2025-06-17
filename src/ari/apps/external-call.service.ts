@@ -38,14 +38,13 @@ export class ExternalCallService {
       this.callAction.hangupChannel(channelA);
       return;
     }
-    const endpoint = 'PJSIP/' + techPrefix + '#' + channelA.dialplan.exten + '@' + trunkName;
     const channelB = await channelA.create({
-      endpoint,
+      endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
       app: ariApp,
       appArgs: 'dialed',
     });
 
-    // await channelB.setChannelVar({variable: 'CALLERID(all)', value: callerId});
+    await channelB.setChannelVar({ variable: 'CALLERID(all)', value: callerId });
     await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,P-Asserted-Identity)', value: company });
 
     // const dialTimeout = this.callAction.dialTimeout(channelA);
@@ -83,7 +82,7 @@ export class ExternalCallService {
     // });
 
     channelB
-      .dial({ caller: callerId, timeout: 30_000 })
+      .dial({ timeout: 30_000 })
       .then(() => {
         this.logger.debug('discado com sucesso');
       })
