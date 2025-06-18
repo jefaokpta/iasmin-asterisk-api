@@ -2,7 +2,7 @@
  * @author Jefferson Alves Reis (jefaokpta) < jefaokpta@hotmail.com >
  * Date: 11/11/24
  */
-import { Channel, Client, StasisStart } from 'ari-client';
+import { Bridge, Channel, Client } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CallActionService } from './util/call-action.service';
@@ -64,21 +64,9 @@ export class ExternalCallService {
       this.callAction.hangupChannel(channelA);
     });
 
-    channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
-      this.callAction.answerChannel(channelA);
-      channel.removeAllListeners('ChannelDestroyed');
-      channel.once('StasisEnd', (event, c) => {
-        this.logger.log(`Canal B ${c.id} desligou a chamada`);
-        this.callAction.hangupChannel(channelA);
-      });
-      this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
-      this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B), ariApp);
-      this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
-    });
-
     channelB.on('ChannelStateChange', (event, channel) => {
       if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
-      if (channel.state === 'Up') this.logger.log(`Canal B ${channel.name} atendeu ${channelA.caller.number}`);
+      if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channelB, bridgeMain, ari, ariApp);
     });
 
     channelB
@@ -90,5 +78,18 @@ export class ExternalCallService {
         this.logger.error(`Erro ao discar pra channel B ${trunkName}`, err.message);
         this.callAction.hangupChannel(channelA);
       });
+  }
+
+  private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
+    this.logger.log(`Canal ${channelB.name} atendeu ${channelA.name}`);
+    this.callAction.answerChannel(channelA);
+    channelB.removeAllListeners('ChannelDestroyed');
+    channelB.once('StasisEnd', (event, c) => {
+      this.logger.log(`Canal B ${c.id} desligou a chamada`);
+      this.callAction.hangupChannel(channelA);
+    });
+    this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
+    this.callAction.createSnoopChannelAndRecord(channelB, recordName(channelA.id, ChannelLeg.B), ariApp);
+    this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
   }
 }
