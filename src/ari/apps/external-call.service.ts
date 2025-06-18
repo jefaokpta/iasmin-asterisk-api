@@ -65,7 +65,6 @@ export class ExternalCallService {
     });
 
     channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
-      this.logger.log(`Canal B ${channel.name} entrou no app de ${channelA.caller.number}`);
       this.callAction.answerChannel(channelA);
       channel.removeAllListeners('ChannelDestroyed');
       channel.once('StasisEnd', (event, c) => {
@@ -79,6 +78,7 @@ export class ExternalCallService {
 
     channelB.on('ChannelStateChange', (event, channel) => {
       if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
+      if (channel.state === 'Up') this.logger.log(`Canal B ${channel.name} atendeu ${channelA.caller.number}`);
     });
 
     channelB
