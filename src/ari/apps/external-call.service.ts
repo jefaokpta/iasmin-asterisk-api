@@ -7,6 +7,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CallActionService } from './util/call-action.service';
 import { CompanyCacheService } from '../../cache-control/company-cache.service';
+import { recordName } from './util/utils';
+import { ChannelLeg } from './util/enus/channel-leg.enum';
 
 @Injectable()
 export class ExternalCallService {
@@ -38,6 +40,7 @@ export class ExternalCallService {
       this.callAction.hangupChannel(channelA);
       return;
     }
+
     const channelB = await channelA.create({
       endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
       app: ariApp,
@@ -51,24 +54,9 @@ export class ExternalCallService {
     await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
 
     channelA.once('StasisEnd', (event, channel) => {
-      this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
-      this.callAction.bridgeDestroy(bridgeMain);
+      this.logger.log(`Canal A ${channel.name} desligou a chamada`);
       this.callAction.hangupChannel(channelB);
-    });
-
-    channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
-      this.logger.log(`Canal B ${channel.name} entrou no app de ${channelA.caller.number}`);
-      this.callAction.answerChannel(channelA);
-      // clearTimeout(dialTimeout);
-      // this.callAction.answerChannel(channelA);
-      // channel.removeAllListeners('ChannelDestroyed');
-      // channel.once('StasisEnd', (event, c) => {
-      //   this.logger.log(`Canal B ${c.id} finalizou a chamada`);
-      //   this.callAction.hangupChannel(channelA);
-      // });
-      // this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
-      // this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B), ariApp);
-      // this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
+      this.callAction.bridgeDestroy(bridgeMain);
     });
 
     channelB.once('ChannelDestroyed', (event, channel) => {
@@ -76,9 +64,22 @@ export class ExternalCallService {
       this.callAction.hangupChannel(channelA);
     });
 
-    // channelB.on('ChannelStateChange', (event, channel) => {
-    //   if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
-    // });
+    channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
+      this.logger.log(`Canal B ${channel.name} entrou no app de ${channelA.caller.number}`);
+      this.callAction.answerChannel(channelA);
+      channel.removeAllListeners('ChannelDestroyed');
+      channel.once('StasisEnd', (event, c) => {
+        this.logger.log(`Canal B ${c.id} desligou a chamada`);
+        this.callAction.hangupChannel(channelA);
+      });
+      this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
+      this.callAction.createSnoopChannelAndRecord(channel, recordName(channelA.id, ChannelLeg.B), ariApp);
+      this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
+    });
+
+    channelB.on('ChannelStateChange', (event, channel) => {
+      if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
+    });
 
     channelB
       .dial({ timeout: 30 })
