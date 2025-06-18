@@ -43,6 +43,13 @@ export class RouterCallAppService implements OnApplicationBootstrap {
           this.outboundStasisStart(stasisStartEvent, channel, ari);
         });
 
+        ari.on('WebSocketMaxRetries', (event) => {
+          this.logger.warn('WebSocketMaxRetries', event);
+        });
+        ari.on('WebSocketReconnecting', (event) => {
+          this.logger.warn('WebSocketReconnecting', event);
+        });
+
         ari
           .start('outbound-router-call-app')
           .then(() => this.logger.log('Roteador de chamadas: outbound-router-call-app 🚀'))
