@@ -27,12 +27,14 @@ export class ExternalCallService {
       this.callAction.hangupChannel(channelA);
       return;
     }
+
     const techPrefix = this.configService.get('PABX_TECH_PREFIX');
     if (!techPrefix) {
       this.logger.warn(`Falta definir techPrefix: ${techPrefix}`);
       this.callAction.hangupChannel(channelA);
       return;
     }
+
     const callerId = this.cacheControlService.getCompanyPhone(company);
     this.logger.debug(`Telefone da empresa: ${callerId}`);
     if (!callerId) {
@@ -47,11 +49,7 @@ export class ExternalCallService {
       appArgs: 'dialed',
     });
 
-    await channelA.setChannelVar({ variable: 'CALLERID(all)', value: callerId });
-    await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,P-Asserted-Identity)', value: company });
-
     const bridgeMain = await this.callAction.createBridge(ari);
-    await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
 
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} desligou a chamada`);
@@ -69,15 +67,16 @@ export class ExternalCallService {
       if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channelB, bridgeMain, ari, ariApp);
     });
 
-    channelB
-      .dial({ timeout: 30 })
-      .then(() => {
-        this.logger.debug('discado com sucesso');
-      })
-      .catch((err) => {
-        this.logger.error(`Erro ao discar pra channel B ${trunkName}`, err.message);
-        this.callAction.hangupChannel(channelA);
-      });
+    try {
+      await this.callAction.setChannelVar(channelA, 'CALLERID(all)', callerId);
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company);
+      await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
+      channelB.dial({ timeout: 30 });
+    } catch (err) {
+      this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
+      this.callAction.hangupChannel(channelA);
+      return;
+    }
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
