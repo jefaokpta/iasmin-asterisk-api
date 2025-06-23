@@ -68,9 +68,23 @@ export class ExternalCallService {
     });
 
     try {
-      await this.callAction.setChannelVar(channelA, 'CALLERID(all)', callerId);
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company);
-      await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
+      try {
+        //TODO: TRYes pra entender falha intermitente ao fazer ligacao, acontecendo na primeira chamada após start do app
+        await this.callAction.setChannelVar(channelA, 'CALLERID(all)', callerId);
+      } catch (err) {
+        this.logger.error(`Falha ao definir callerId: ${callerId}`, err);
+      }
+      try {
+        await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company);
+      } catch (err) {
+        this.logger.error(`Falha ao definir PJSIP_HEADER: ${callerId}`, err);
+      }
+      try {
+        await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
+      } catch (err) {
+        this.logger.error(`Falha ao adicionar canais ao bridge: ${channelA.name} ${channelB.name}`, err);
+      }
+
       channelB.dial({ timeout: 30 });
     } catch (err) {
       this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
