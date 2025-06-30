@@ -37,9 +37,15 @@ export class InternalCallService {
       if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
     });
 
+    if (channelA.dialplan.exten !== '12345') {
+      //TODO: nao gastar creditos VAPI
+      this.callAction.hangupChannel(channelA);
+      return;
+    }
+
     channelB
       .originate({
-        endpoint: `PJSIP/jefao`,
+        endpoint: `PJSIP/VAPI/5511914317014`,
         app: ariApp,
         appArgs: 'dialed',
         callerId: `${channelA.caller.name} <${channelA.caller.number}>`,
