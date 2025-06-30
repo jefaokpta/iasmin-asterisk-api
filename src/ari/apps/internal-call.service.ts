@@ -45,7 +45,7 @@ export class InternalCallService {
 
     channelB
       .originate({
-        endpoint: `PJSIP/VAPI/5511914317014`,
+        endpoint: `PJSIP/5511914317014@VAPI`,
         app: ariApp,
         appArgs: 'dialed',
         callerId: `${channelA.caller.name} <${channelA.caller.number}>`,
