@@ -85,7 +85,9 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
       const companyVar = await channel.getChannelVar({ variable: 'CDR(company)' });
       const company = companyVar.value;
-      this.logger.log(`Ligacao de ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} Empresa ${company}`);
+      this.logger.log(
+        `Ligacao de ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} Empresa ${company} UNIQUEID ${channel.id}`,
+      );
 
       if (channel.dialplan.exten.length < 8) {
         this.internalCallService.internalCall(ari, channel, ariApp);
@@ -102,7 +104,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   private async inboundStasisStart(event: StasisStart, channel: Channel, ari: Client, ariApp = 'inbound-router-call-app') {
     if (this.initialStasisStartCheck(event, channel, ari)) return;
 
-    this.logger.log(`Ligacao de entrada ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten}`);
+    this.logger.log(`Entrando ligacao ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} UNIQUEID ${channel.id}`);
 
     try {
       await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'INBOUND' });
