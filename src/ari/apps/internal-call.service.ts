@@ -36,7 +36,7 @@ export class InternalCallService {
     }
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-name)', 'Jefferson Alves');
+      await this.callAction.setChannelVar(channelA, 'CALLERID(all)', '11914317014');
       channelB.dial({ timeout: 30 });
     } catch (err) {
       this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
