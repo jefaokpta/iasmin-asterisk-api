@@ -35,11 +35,8 @@ export class InternalCallService {
       return;
     }
     try {
-      try {
-        await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-UNIQUEID)', channelA.id);
-      } catch (err) {
-        this.logger.error(`Falha ao definir PJSIP_HEADER: ${channelA.id}`, err);
-      }
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-name)', 'Jefferson Alves');
       channelB.dial({ timeout: 30 });
     } catch (err) {
       this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
