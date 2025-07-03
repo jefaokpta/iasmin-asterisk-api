@@ -8,9 +8,10 @@ import { CacheControlModule } from '../cache-control/cache-control.module';
 import { IncomingCallService } from './calls/incoming-call.service';
 import { UtilModule } from '../utils/util.module';
 import { SecurityModule } from '../security/security.module';
+import { AssistantCallService } from './calls/assistant-call.service';
 
 @Module({
   imports: [HttpClientModule, CacheControlModule, UtilModule, SecurityModule],
-  providers: [RouterCallAppService, ExternalCallService, InternalCallService, CallActionService, IncomingCallService],
+  providers: [RouterCallAppService, ExternalCallService, InternalCallService, CallActionService, IncomingCallService, AssistantCallService],
 })
 export class AriModule {}

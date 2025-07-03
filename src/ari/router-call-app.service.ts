@@ -14,6 +14,7 @@ import { CallActionService } from './util/call-action.service';
 import { UserCacheService } from '../cache-control/user-cache.service';
 import { IncomingCallService } from './calls/incoming-call.service';
 import { SecurityService } from '../security/security.service';
+import { AssistantCallService } from './calls/assistant-call.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
@@ -27,6 +28,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     private readonly callAction: CallActionService,
     private readonly incomingCallService: IncomingCallService,
     private readonly securityService: SecurityService,
+    private readonly assistantCallService: AssistantCallService,
   ) {}
 
   private readonly logger = new Logger(RouterCallAppService.name);
@@ -90,6 +92,10 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       );
 
       if (channel.dialplan.exten.length < 8) {
+        if (channel.dialplan.exten === '12345') {
+          this.assistantCallService.assistantCall(ari, channel, ariApp);
+          return;
+        }
         this.internalCallService.internalCall(ari, channel, ariApp);
         return;
       }

@@ -5,14 +5,17 @@
 import { Channel, Client } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
 import { CallActionService } from '../util/call-action.service';
+import { InternalCallService } from './internal-call.service';
+import { recordName } from '../util/utils';
+import { ChannelLeg } from '../util/enus/channel-leg.enum';
 
 @Injectable()
-export class InternalCallService {
+export class AssistantCallService {
   constructor(private readonly callAction: CallActionService) {}
 
   private readonly logger = new Logger(InternalCallService.name);
 
-  async internalCall(ari: Client, channelA: Channel, ariApp: string) {
+  async assistantCall(ari: Client, channelA: Channel, ariApp: string) {
     const channelB = await channelA.create({
       endpoint: `PJSIP/5511914317014@VAPI`,
       app: ariApp,
@@ -29,11 +32,6 @@ export class InternalCallService {
       if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channelB, ari);
     });
 
-    if (channelA.dialplan.exten !== '12345') {
-      //TODO: nao gastar creditos VAPI
-      this.callAction.hangupChannel(channelA);
-      return;
-    }
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
       channelB.dial({ timeout: 30 });
@@ -42,18 +40,6 @@ export class InternalCallService {
       this.callAction.hangupChannel(channelA);
       return;
     }
-
-    // channelB
-    //   .originate({
-    //     endpoint: `PJSIP/5511914317014@VAPI`,
-    //     app: ariApp,
-    //     appArgs: 'dialed',
-    //     callerId: `${channelA.caller.name} <${channelA.caller.number}>`,
-    //   })
-    //   .catch((err) => {
-    //     this.logger.error(`Erro ao originar chamada ${channelA.name}`, err.message);
-    //     this.callAction.hangupChannel(channelA);
-    //   });
   }
 
   private async channelBAnsweredCall(channelA: Channel, channelB: Channel, ari: Client) {
@@ -65,5 +51,6 @@ export class InternalCallService {
       this.callAction.bridgeDestroy(bridgeMain);
     });
     this.callAction.addChannelsToBridge(bridgeMain, [channelA, channelB]);
+    this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
   }
 }

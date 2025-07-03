@@ -26,7 +26,12 @@ export class CdrService {
 
   async cdrCreated(cdr: Cdr) {
     if (cdr.billableSeconds > 0) {
-      const cdrUpdated = { ...cdr, callRecord: this.createRecordFileName(cdr) };
+      const cdrUpdated = { ...cdr, callRecord: this.createRecordFileName(cdr.uniqueId) };
+      const assistantChannel = 'PJSIP/VAPI';
+      if (cdr.channel.startsWith(assistantChannel || cdr.destinationChannel.startsWith(assistantChannel))) {
+        this.convertAudioToMp3(cdrUpdated);
+        return;
+      }
       await this.convertAudioToMp3(cdrUpdated);
       this.sendCdrToBackend(cdrUpdated);
       return;
@@ -66,9 +71,7 @@ export class CdrService {
       });
   }
 
-  private createRecordFileName(cdr: Cdr): string {
-    const date = cdr.startTime.split(' ')[0].replace(/-/g, '');
-    const time = cdr.startTime.split(' ')[1].replace(/:/g, '');
-    return `${date}_${time}_${cdr.src}_${cdr.destination}_${cdr.uniqueId.replace('.', '-')}.mp3`;
+  private createRecordFileName(uniqueId: string): string {
+    return `${uniqueId.replace('.', '-')}.mp3`;
   }
 }

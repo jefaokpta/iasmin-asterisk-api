@@ -37,10 +37,7 @@ export class AmiConnectionService implements OnApplicationBootstrap {
 
     this.ami.on('cdr', (cdr: any) => {
       if (cdr.destination == 's') return;
-      if (cdr.destination.length < 8) {
-        console.log(cdr); // TODO: depois dos testes return
-        return;
-      }
+      if (cdr.destination.length < 5) return;
       this.cdrService.cdrCreated(new Cdr(cdr));
     });
     this.ami.on('invalidaccountid', (invalidAccountId: any) =>
