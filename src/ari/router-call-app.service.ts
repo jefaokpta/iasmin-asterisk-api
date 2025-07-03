@@ -6,14 +6,14 @@
 import { Channel, Client, connect, StasisStart } from 'ari-client';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ExternalCallService } from './external-call.service';
-import { InternalCallService } from './internal-call.service';
-import { HttpClientService } from '../../http-client/http-client.service';
-import { CompanyCacheService } from '../../cache-control/company-cache.service';
+import { ExternalCallService } from './calls/external-call.service';
+import { InternalCallService } from './calls/internal-call.service';
+import { HttpClientService } from '../http-client/http-client.service';
+import { CompanyCacheService } from '../cache-control/company-cache.service';
 import { CallActionService } from './util/call-action.service';
-import { UserCacheService } from '../../cache-control/user-cache.service';
-import { IncomingCallService } from './incoming-call.service';
-import { SecurityService } from '../../security/security.service';
+import { UserCacheService } from '../cache-control/user-cache.service';
+import { IncomingCallService } from './calls/incoming-call.service';
+import { SecurityService } from '../security/security.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {

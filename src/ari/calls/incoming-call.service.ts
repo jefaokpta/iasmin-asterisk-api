@@ -3,12 +3,12 @@
  * @email jefaokpta@hotmail.com
  * @create 5/28/25
  */
-import { CallActionService } from './util/call-action.service';
+import { CallActionService } from '../util/call-action.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { Bridge, Channel, Client, Endpoint, StasisStart } from 'ari-client';
 import { User } from '../../peer/user';
-import { recordName } from './util/utils';
-import { ChannelLeg } from './util/enus/channel-leg.enum';
+import { recordName } from '../util/utils';
+import { ChannelLeg } from '../util/enus/channel-leg.enum';
 import { UtilService } from '../../utils/util.service';
 
 @Injectable()

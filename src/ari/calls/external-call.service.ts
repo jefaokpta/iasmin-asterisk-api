@@ -5,10 +5,10 @@
 import { Bridge, Channel, Client } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CallActionService } from './util/call-action.service';
+import { CallActionService } from '../util/call-action.service';
 import { CompanyCacheService } from '../../cache-control/company-cache.service';
-import { recordName } from './util/utils';
-import { ChannelLeg } from './util/enus/channel-leg.enum';
+import { recordName } from '../util/utils';
+import { ChannelLeg } from '../util/enus/channel-leg.enum';
 
 @Injectable()
 export class ExternalCallService {

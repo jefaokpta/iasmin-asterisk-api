@@ -4,7 +4,7 @@
  */
 import { Channel, Client } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
-import { CallActionService } from './util/call-action.service';
+import { CallActionService } from '../util/call-action.service';
 
 @Injectable()
 export class InternalCallService {
