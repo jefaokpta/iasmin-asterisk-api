@@ -32,8 +32,14 @@ export class AssistantCallService {
       if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channelB, ari);
     });
 
+    channelB.on('StasisStart', (event, channel) => {
+      this.logger.debug(`peguei o B ${channel.name}`);
+    });
+
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-src)', channelA.caller.number);
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-destination)', channelA.dialplan.exten);
       channelB.dial({ timeout: 30 });
     } catch (err) {
       this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
