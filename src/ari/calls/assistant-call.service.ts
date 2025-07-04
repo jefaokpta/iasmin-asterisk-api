@@ -32,7 +32,7 @@ export class AssistantCallService {
       if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channelB, ari);
     });
 
-    channelB.on('StasisStart', (event, channel) => {
+    channelB.once('StasisStart', (event, channel) => {
       this.logger.debug(`peguei o B ${channel.name}`);
     });
 
