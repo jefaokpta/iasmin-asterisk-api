@@ -22,6 +22,19 @@ export class AssistantCallService {
       appArgs: 'dialed',
     });
 
+    channelB.once('StasisStart', async (event, channel) => {
+      try {
+        await this.callAction.setChannelVar(channel, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
+        await this.callAction.setChannelVar(channel, 'PJSIP_HEADER(add,X-src)', channelA.caller.number);
+        await this.callAction.setChannelVar(channel, 'PJSIP_HEADER(add,X-destination)', channelA.dialplan.exten);
+        channel.dial({ timeout: 30 });
+      } catch (err) {
+        this.logger.error(`${channelA.name} Erro ao discar para: ${channel.name} ${channelA.dialplan.exten}`, err.message);
+        this.callAction.hangupChannel(channelA);
+        return;
+      }
+    });
+
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
       this.callAction.hangupChannel(channelB);
@@ -31,21 +44,6 @@ export class AssistantCallService {
       if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
       if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channelB, ari);
     });
-
-    channelB.once('StasisStart', (event, channel) => {
-      this.logger.debug(`peguei o B ${channel.name}`);
-    });
-
-    try {
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-src)', channelA.caller.number);
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-destination)', channelA.dialplan.exten);
-      channelB.dial({ timeout: 30 });
-    } catch (err) {
-      this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
-      this.callAction.hangupChannel(channelA);
-      return;
-    }
   }
 
   private async channelBAnsweredCall(channelA: Channel, channelB: Channel, ari: Client) {
