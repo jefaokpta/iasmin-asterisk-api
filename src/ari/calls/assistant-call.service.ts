@@ -23,16 +23,9 @@ export class AssistantCallService {
     });
 
     channelB.once('StasisStart', async (event, channel) => {
-      try {
-        await this.callAction.setChannelVar(channel, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
-        await this.callAction.setChannelVar(channel, 'PJSIP_HEADER(add,X-src)', channelA.caller.number);
-        await this.callAction.setChannelVar(channel, 'PJSIP_HEADER(add,X-destination)', channelA.dialplan.exten);
-        channel.dial({ timeout: 30 });
-      } catch (err) {
-        this.logger.error(`${channelA.name} Erro ao discar para: ${channel.name} ${channelA.dialplan.exten}`, err.message);
-        this.callAction.hangupChannel(channelA);
-        return;
-      }
+      this.logger.debug(`Canal B ${channel.name} entrou no StasisApp`);
+      clearTimeout(dialTimeout);
+      this.dialChannelB(channelA, channelB);
     });
 
     channelA.once('StasisEnd', (event, channel) => {
@@ -44,6 +37,24 @@ export class AssistantCallService {
       if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
       if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channelB, ari);
     });
+
+    const dialTimeout = setTimeout(() => {
+      this.dialChannelB(channelA, channelB);
+    }, 1000);
+  }
+
+  private async dialChannelB(channelA: Channel, channelB: Channel) {
+    this.logger.log(`Executando dial ${channelB.name}`);
+    try {
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-src)', channelA.caller.number);
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-destination)', channelA.dialplan.exten);
+      channelB.dial({ timeout: 30 });
+    } catch (err) {
+      this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
+      this.callAction.hangupChannel(channelA);
+      return;
+    }
   }
 
   private async channelBAnsweredCall(channelA: Channel, channelB: Channel, ari: Client) {
