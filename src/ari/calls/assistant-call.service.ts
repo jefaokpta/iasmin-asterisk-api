@@ -44,7 +44,7 @@ export class AssistantCallService {
   }
 
   private async dialChannelB(channelA: Channel, channelB: Channel) {
-    this.logger.log(`Executando dial ${channelB.name}`);
+    this.logger.log(`Executando dial ${channelB.name}`); //comentario
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-src)', channelA.caller.number);
