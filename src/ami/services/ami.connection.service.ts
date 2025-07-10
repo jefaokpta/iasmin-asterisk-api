@@ -36,7 +36,7 @@ export class AmiConnectionService implements OnApplicationBootstrap {
     Logger.log('AMI Conectado 🚀', 'AmiConnectionService');
 
     this.ami.on('cdr', (cdr: any) => {
-      if (cdr.destination == 's') return;
+      if (cdr.destination === 's' || cdr.destination === '12345') return;
       if (cdr.destination.length < 5) return;
       this.cdrService.cdrCreated(new Cdr(cdr));
     });
