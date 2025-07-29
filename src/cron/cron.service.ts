@@ -14,11 +14,6 @@ export class CronService {
     private readonly configService: ConfigService,
   ) {}
 
-  @Cron(CronExpression.EVERY_SECOND)
-  testEventLoop() {
-    this.logger.debug('Event loop ok ');
-  }
-
   @Cron(CronExpression.EVERY_5_MINUTES)
   writeBlockedInvadersFile() {
     this.amiService.writeBlockedInvadersFile();

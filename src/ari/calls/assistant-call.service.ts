@@ -16,8 +16,9 @@ export class AssistantCallService {
   private readonly logger = new Logger(InternalCallService.name);
 
   async assistantCall(ari: Client, channelA: Channel, ariApp: string) {
+    const endpoint = channelA.dialplan.exten === '12345' ? 'PJSIP/551234567890@VAPI' : `PJSIP/55${channelA.dialplan.exten}@VAPI`;
     const channelB = await channelA.create({
-      endpoint: `PJSIP/5511914317014@VAPI`,
+      endpoint,
       app: ariApp,
       appArgs: 'dialed',
     });
