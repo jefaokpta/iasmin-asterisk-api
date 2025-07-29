@@ -50,6 +50,7 @@ export class AssistantCallService {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-src)', channelA.caller.number);
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-destination)', channelA.dialplan.exten);
+      await this.callAction.setChannelVar(channelB, 'CALLERID(all)', 'Teste');
       channelB.dial({ timeout: 30 });
     } catch (err) {
       this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
