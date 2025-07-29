@@ -92,7 +92,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       );
 
       if (channel.dialplan.exten.length < 8) {
-        if (channel.dialplan.exten === '12345') {
+        if (channel.dialplan.exten === '*12345') {
           this.assistantCallService.assistantCall(ari, channel, ariApp);
           return;
         }
