@@ -40,8 +40,9 @@ export class AssistantCallService {
     });
 
     const dialTimeout = setTimeout(() => {
+      this.logger.warn('ATENCAO! Dial feito pelo timeout')
       this.dialChannelB(channelA, channelB);
-    }, 1000);
+    }, 2000);
   }
 
   private async dialChannelB(channelA: Channel, channelB: Channel) {
