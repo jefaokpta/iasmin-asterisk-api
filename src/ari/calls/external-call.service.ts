@@ -53,8 +53,8 @@ export class ExternalCallService {
     });
 
     channelB.once('StasisStart', (event, channel) => {
-      clearTimeout(dialTimeout);
-      this.dialChannelB(channelA, channel, bridgeMain, company);
+      this.logger.debug(`Canal B ${channel.name} entrou no StasisApp`);
+      // this.dialChannelB(channelA, channel, bridgeMain, company);
     });
 
     channelA.once('StasisEnd', (event, channel) => {
@@ -78,10 +78,16 @@ export class ExternalCallService {
       this.dialChannelB(channelA, channelB, bridgeMain, company);
     }, 2000);
 
+    this.dialChannelB(channelA, channelB, bridgeMain, company, dialTimeout)
+      .catch((err) => {
+        this.logger.error(`Discagem direta nao foi possivel - deve ir por timeout`, err.message);
+      })
+
   }
 
-  private async dialChannelB(channelA: Channel, channelB: Channel, bridgeMain: Bridge, company: string) {
+  private async dialChannelB(channelA: Channel, channelB: Channel, bridgeMain: Bridge, company: string, dialTimeout?: any) {
     this.logger.log(`Executando external dial ${channelB.name}`);
+    clearTimeout(dialTimeout);
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company);
       await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
