@@ -43,13 +43,20 @@ export class ExternalCallService {
       return;
     }
 
+    const bridgeMain = await this.callAction.createBridge(ari);
+    await this.callAction.setChannelVar(channelA, 'CALLERID(all)', callerId);
+
     const channelB = await channelA.create({
       endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
       app: ariApp,
       appArgs: 'dialed',
     });
 
-    const bridgeMain = await this.callAction.createBridge(ari);
+    channelB.once('StasisStart', async (event, channel) => {
+      this.logger.debug(`Canal B ${channel.name} entrou no StasisApp`);
+      clearTimeout(dialTimeout);
+      this.dialChannelB(channelA, channel, bridgeMain, company);
+    });
 
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} desligou a chamada`);
@@ -64,27 +71,21 @@ export class ExternalCallService {
 
     channelB.on('ChannelStateChange', (event, channel) => {
       if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
-      if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channelB, bridgeMain, ari, ariApp);
+      if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channel, bridgeMain, ari, ariApp);
     });
 
-    try {
-      try {
-        //TODO: TRYes pra entender falha intermitente ao fazer ligacao, acontecendo na primeira chamada após start do app
-        await this.callAction.setChannelVar(channelA, 'CALLERID(all)', callerId);
-      } catch (err) {
-        this.logger.error(`Falha ao definir callerId: ${callerId}`, err);
-      }
-      try {
-        await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company);
-      } catch (err) {
-        this.logger.error(`Falha ao definir PJSIP_HEADER: ${callerId}`, err);
-      }
-      try {
-        await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
-      } catch (err) {
-        this.logger.error(`Falha ao adicionar canais ao bridge: ${channelA.name} ${channelB.name}`, err);
-      }
+    const dialTimeout = setTimeout(() => {
+      this.logger.warn('ATENCAO! Dial feito pelo timeout')
+      this.dialChannelB(channelA, channelB, bridgeMain, company);
+    }, 2000);
 
+  }
+
+  private async dialChannelB(channelA: Channel, channelB: Channel, bridgeMain: Bridge, company: string) {
+    this.logger.log(`Executando external dial ${channelB.name}`);
+    try {
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company);
+      await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
       channelB.dial({ timeout: 30 });
     } catch (err) {
       this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
