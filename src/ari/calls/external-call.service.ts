@@ -76,7 +76,7 @@ export class ExternalCallService {
     const dialTimeout = setTimeout(() => {
       this.logger.warn('ATENCAO! Dial feito pelo timeout')
       this.dialChannelB(channelA, channelB, bridgeMain, company);
-    }, 5000);
+    }, 2000);
 
   }
 
