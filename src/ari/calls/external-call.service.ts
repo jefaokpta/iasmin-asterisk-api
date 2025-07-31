@@ -53,7 +53,6 @@ export class ExternalCallService {
     });
 
     channelB.once('StasisStart', async (event, channel) => {
-      this.logger.debug(`Canal B ${channel.name} entrou no StasisApp`);
       clearTimeout(dialTimeout);
       this.dialChannelB(channelA, channel, bridgeMain, company);
     });
@@ -77,7 +76,7 @@ export class ExternalCallService {
     const dialTimeout = setTimeout(() => {
       this.logger.warn('ATENCAO! Dial feito pelo timeout')
       this.dialChannelB(channelA, channelB, bridgeMain, company);
-    }, 2000);
+    }, 5000);
 
   }
 
