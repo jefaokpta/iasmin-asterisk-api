@@ -23,7 +23,7 @@ export class AssistantCallService {
       appArgs: 'dialed',
     });
 
-    channelB.once('StasisStart', async (event, channel) => {
+    channelB.once('StasisStart', (event, channel) => {
       this.logger.debug(`Canal B ${channel.name} entrou no StasisApp`);
       clearTimeout(dialTimeout);
       this.dialChannelB(channelA, channelB);

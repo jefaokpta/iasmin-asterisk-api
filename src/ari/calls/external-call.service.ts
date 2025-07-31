@@ -52,7 +52,7 @@ export class ExternalCallService {
       appArgs: 'dialed',
     });
 
-    channelB.once('StasisStart', async (event, channel) => {
+    channelB.once('StasisStart', (event, channel) => {
       clearTimeout(dialTimeout);
       this.dialChannelB(channelA, channel, bridgeMain, company);
     });
