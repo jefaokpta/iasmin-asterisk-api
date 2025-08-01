@@ -8,7 +8,7 @@ import { SecurityService } from '../security/security.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { Company } from './company';
 import axios from 'axios';
-import https from 'https';
+import * as https from 'https';
 
 @Injectable()
 export class CompanyClientService {
