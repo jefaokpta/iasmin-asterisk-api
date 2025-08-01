@@ -43,11 +43,13 @@ export class CompanyClientService {
   }
 
   private createHttpConfig() {
+    const token = this.securityService.generateToken();
+    console.log(token);
     return {
       httpsAgent: new https.Agent({ timeout: this.HTTP_CONNECTION_TIMEOUT }),
       timeout: this.HTTP_REQUEST_TIMEOUT,
       headers: {
-        Authorization: `Bearer ${this.securityService.generateToken()}`,
+        Authorization: `Bearer ${token}`,
       },
     };
   }
