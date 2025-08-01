@@ -7,7 +7,10 @@ export class SecurityService {
 
   generateToken(): string {
     return this.jwtService.sign({
-      roles: ['super, admin, user'],
+      roles: [
+        'super',
+        'admin',
+      ],
     });
   }
 

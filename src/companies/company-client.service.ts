@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { SecurityService } from '../security/security.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { Company } from './company';
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import * as https from 'https';
 
 @Injectable()
@@ -42,14 +42,12 @@ export class CompanyClientService {
     }
   }
 
-  private createHttpConfig() {
-    const token = this.securityService.generateToken();
-    console.log(token);
+  private createHttpConfig(): AxiosRequestConfig {
     return {
       httpsAgent: new https.Agent({ timeout: this.HTTP_CONNECTION_TIMEOUT }),
       timeout: this.HTTP_REQUEST_TIMEOUT,
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${this.securityService.generateToken()}`,
       },
     };
   }
