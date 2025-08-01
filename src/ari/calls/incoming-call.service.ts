@@ -6,10 +6,9 @@
 import { CallActionService } from '../util/call-action.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { Bridge, Channel, Client, Endpoint, StasisStart } from 'ari-client';
-import { User } from '../../peer/user';
 import { recordName } from '../util/utils';
 import { ChannelLeg } from '../util/enus/channel-leg.enum';
-import { UtilService } from '../../utils/util.service';
+import { Company } from '../../companies/company';
 
 @Injectable()
 export class IncomingCallService {
@@ -17,14 +16,13 @@ export class IncomingCallService {
 
   constructor(
     private readonly callAction: CallActionService,
-    private readonly utilService: UtilService,
   ) {}
 
-  async callAllUsers(ari: Client, channelA: Channel, company: string, ariApp: string) {
-    this.logger.log('Chamando todos os usuários da empresa: ' + company);
-    const users = this.utilService.defineAttendants(company);
-    if (users.length === 0) {
-      this.logger.warn('Não existe usuários da empresa: ' + company);
+  async callAllUsers(ari: Client, channelA: Channel, company: Company, ariApp: string) {
+    this.logger.log('Chamando todos os usuários da empresa: ' + company.controlNumber);
+    const users = company.attendantCallUsers
+    if (users.length === 0) { //TODO: considerar assistentes de voz
+      this.logger.warn('Não existe usuários da empresa: ' + company.controlNumber);
       this.callAction.hangupChannel(channelA);
       return;
     }
@@ -33,7 +31,7 @@ export class IncomingCallService {
     const dialTimeout = this.callAction.dialTimeout(channelA);
     channelA.once('StasisEnd', () => this.hangupAllChannels(dialedUsers, dialTimeout));
     this.callAction.ringChannel(channelA);
-    this.filterFreeAndOfflineUsers(users, peers).forEach((user) => {
+    this.filterOfflineUsers(users, peers).forEach((user) => {
       const channelB = ari.Channel();
       dialedUsers.push(channelB);
 
@@ -43,7 +41,7 @@ export class IncomingCallService {
 
       channelB
         .originate({
-          endpoint: `PJSIP/${user.id.toString()}`,
+          endpoint: `PJSIP/${user}`,
           app: ariApp,
           appArgs: 'dialed',
           callerId: channelA.caller.number,
@@ -98,9 +96,8 @@ export class IncomingCallService {
     return ari.endpoints.list();
   }
 
-  private filterFreeAndOfflineUsers(users: User[], peers: Endpoint[]): User[] {
+  private filterOfflineUsers(users: string[], peers: Endpoint[]): string[] {
     return users
-      .filter((user) => user.roles.length > 1)
-      .filter((user) => peers.find((peer) => peer.resource === user.id.toString() && peer.state === 'online'));
+      .filter((user) => peers.find((peer) => peer.resource === user && peer.state === 'online'));
   }
 }

@@ -8,13 +8,11 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ExternalCallService } from './calls/external-call.service';
 import { InternalCallService } from './calls/internal-call.service';
-import { HttpClientService } from '../http-client/http-client.service';
-import { CompanyCacheService } from '../cache-control/company-cache.service';
 import { CallActionService } from './util/call-action.service';
-import { UserCacheService } from '../cache-control/user-cache.service';
 import { IncomingCallService } from './calls/incoming-call.service';
 import { SecurityService } from '../security/security.service';
 import { AssistantCallService } from './calls/assistant-call.service';
+import { CompanyClientService } from '../companies/company-client.service';
 
 @Injectable()
 export class RouterCallAppService implements OnApplicationBootstrap {
@@ -22,22 +20,16 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     private readonly configService: ConfigService,
     private readonly externalCallService: ExternalCallService,
     private readonly internalCallService: InternalCallService,
-    private readonly httpClientService: HttpClientService,
-    private readonly companyCacheService: CompanyCacheService,
-    private readonly userCacheService: UserCacheService,
     private readonly callAction: CallActionService,
     private readonly incomingCallService: IncomingCallService,
     private readonly securityService: SecurityService,
     private readonly assistantCallService: AssistantCallService,
+    private readonly companyClientService: CompanyClientService
   ) {}
 
   private readonly logger = new Logger(RouterCallAppService.name);
 
   async onApplicationBootstrap() {
-    this.logger.log('Carregando empresas...');
-    this.companyCacheService.loadCompanies(await this.httpClientService.getCompanies());
-    this.logger.log('Carregando usuários...');
-    this.userCacheService.loadUsers(await this.httpClientService.getUsers());
 
     connect(this.configService.get('ARI_HOST')!, this.configService.get('ARI_USER')!, this.configService.get('ARI_PASS')!)
       .then((ari) => {
@@ -86,9 +78,9 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
       await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
       const companyVar = await channel.getChannelVar({ variable: 'CDR(company)' });
-      const company = companyVar.value;
+      const controlNumber = companyVar.value;
       this.logger.log(
-        `➡ Ligacao de ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} Empresa ${company} UNIQUEID ${channel.id}`,
+        `➡ Ligacao de ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} Empresa ${controlNumber} UNIQUEID ${channel.id}`,
       );
 
       if (channel.dialplan.exten.length < 8) {
@@ -99,7 +91,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
         this.internalCallService.internalCall(ari, channel, ariApp);
         return;
       }
-
+      const company = await this.companyClientService.findByControlNumber(controlNumber);
       this.externalCallService.externalCall(ari, channel, company, ariApp);
     } catch (err) {
       this.logger.error('Erro ao processar ligação de saida', err.message);
@@ -114,9 +106,9 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
     try {
       await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'INBOUND' });
-      const company = this.companyCacheService.findCompanyByPhone(channel.dialplan.exten);
-      await channel.setChannelVar({ variable: 'CDR(company)', value: company });
-      this.incomingCallService.callAllUsers(ari, channel, company!, ariApp);
+      const company = await this.companyClientService.findCompanyByPhone(channel.dialplan.exten);
+      await channel.setChannelVar({ variable: 'CDR(company)', value: company.controlNumber });
+      this.incomingCallService.callAllUsers(ari, channel, company, ariApp);
     } catch (err) {
       this.logger.error('Erro ao processar ligacao de entrada', err.message);
       this.callAction.hangupChannel(channel);

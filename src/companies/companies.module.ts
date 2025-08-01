@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { CompaniesService } from './companies.service';
-import { CompaniesController } from './companies.controller';
-import { CacheControlModule } from '../cache-control/cache-control.module';
+import { CompanyClientService } from './company-client.service';
+import { SecurityModule } from '../security/security.module';
 
 @Module({
-  imports: [CacheControlModule],
-  controllers: [CompaniesController],
-  providers: [CompaniesService],
+  imports: [SecurityModule],
+  providers: [CompanyClientService],
+  exports: [CompanyClientService],
 })
 export class CompaniesModule {}

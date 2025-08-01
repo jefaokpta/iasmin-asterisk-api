@@ -6,21 +6,20 @@ import { Bridge, Channel, Client } from 'ari-client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CallActionService } from '../util/call-action.service';
-import { CompanyCacheService } from '../../cache-control/company-cache.service';
 import { recordName } from '../util/utils';
 import { ChannelLeg } from '../util/enus/channel-leg.enum';
+import { Company } from '../../companies/company';
 
 @Injectable()
 export class ExternalCallService {
   constructor(
     private readonly configService: ConfigService,
     private readonly callAction: CallActionService,
-    private readonly cacheControlService: CompanyCacheService,
   ) {}
 
   private readonly logger = new Logger(ExternalCallService.name);
 
-  async externalCall(ari: Client, channelA: Channel, company: string, ariApp: string) {
+  async externalCall(ari: Client, channelA: Channel, company: Company, ariApp: string) {
     const trunkName = this.configService.get('PABX_TRUNK');
     if (!trunkName) {
       this.logger.warn(`Falta definir trunk de saida: ${trunkName}`);
@@ -35,16 +34,10 @@ export class ExternalCallService {
       return;
     }
 
-    const callerId = this.cacheControlService.getCompanyPhone(company);
-    this.logger.debug(`Telefone da empresa: ${callerId}`);
-    if (!callerId) {
-      this.logger.warn(`Falta definir telefone da empresa: ${company}`);
-      this.callAction.hangupChannel(channelA);
-      return;
-    }
+    this.logger.debug(`Telefone da empresa: ${company.phone}`);
 
     const bridgeMain = await this.callAction.createBridge(ari);
-    await this.callAction.setChannelVar(channelA, 'CALLERID(all)', callerId);
+    await this.callAction.setChannelVar(channelA, 'CALLERID(all)', company.phone);
 
     const channelB = await channelA.create({
       endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
@@ -80,11 +73,11 @@ export class ExternalCallService {
 
   }
 
-  private async dialChannelB(channelA: Channel, channelB: Channel, bridgeMain: Bridge, company: string, dialTimeout?: any) {
+  private async dialChannelB(channelA: Channel, channelB: Channel, bridgeMain: Bridge, company: Company, dialTimeout?: any) {
     clearTimeout(dialTimeout);
     this.logger.log(`Executando external dial ${channelB.name}`);
     try {
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company);
+      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company.controlNumber);
       await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
       channelB.dial({ timeout: 30 });
     } catch (err) {
