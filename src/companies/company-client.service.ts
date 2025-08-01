@@ -34,7 +34,7 @@ export class CompanyClientService {
 
   async findByControlNumber(controlNumber: string): Promise<Company> {
     try {
-      const response = await axios.get(`${this.BACKEND_API}/companies/control-numbers/${controlNumber}`, this.createHttpConfig());
+      const response = await axios.get(`${this.BACKEND_API}/companies/cn/${controlNumber}`, this.createHttpConfig());
       return response.data;
     } catch (err) {
       this.logger.error(`Erro ao obter empresa pelo CN: ${err}`);
