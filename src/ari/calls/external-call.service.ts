@@ -22,19 +22,19 @@ export class ExternalCallService {
   async externalCall(ari: Client, channelA: Channel, company: Company, ariApp: string) {
     const trunkName = this.configService.get('PABX_TRUNK');
     if (!trunkName) {
-      this.logger.warn(`Falta definir trunk de saida: ${trunkName}`);
+      this.logger.warn(`${channelA.id} >> Falta definir trunk de saida: ${trunkName}`);
       this.callAction.hangupChannel(channelA);
       return;
     }
 
     const techPrefix = this.configService.get('PABX_TECH_PREFIX');
     if (!techPrefix) {
-      this.logger.warn(`Falta definir techPrefix: ${techPrefix}`);
+      this.logger.warn(`${channelA.id} >> Falta definir techPrefix: ${techPrefix}`);
       this.callAction.hangupChannel(channelA);
       return;
     }
 
-    this.logger.debug(`Telefone da empresa: ${company.phone}`);
+    this.logger.debug(`${channelA.id} >> Telefone da empresa: ${company.phone}`);
 
     const bridgeMain = await this.callAction.createBridge(ari);
     await this.callAction.setChannelVar(channelA, 'CALLERID(all)', company.phone);
@@ -46,13 +46,13 @@ export class ExternalCallService {
     });
 
     channelA.once('StasisEnd', (event, channel) => {
-      this.logger.log(`Canal A ${channel.name} desligou a chamada`);
+      this.logger.log(`${channel.id} >> Canal A ${channel.name} desligou a chamada`);
       this.callAction.hangupChannel(channelB);
       this.callAction.bridgeDestroy(bridgeMain);
     });
 
     channelB.once('ChannelDestroyed', (event, channel) => {
-      this.logger.log(`Canal B ${channel.name} cancelou a chamada`);
+      this.logger.log(`${channelA.id} >> Canal B ${channel.name} cancelou a chamada`);
       this.callAction.hangupChannel(channelA);
     });
 
@@ -62,37 +62,37 @@ export class ExternalCallService {
     });
 
     const dialTimeout = setTimeout(() => {
-      this.logger.warn('ATENCAO! Dial feito pelo timeout')
+      this.logger.warn(`${channelA.id} >> ATENCAO! Dial feito pelo timeout`)
       this.dialChannelB(channelA, channelB, bridgeMain, company);
     }, 2000);
 
     this.dialChannelB(channelA, channelB, bridgeMain, company, dialTimeout)
       .catch((err) => {
-        this.logger.error(`Discagem direta nao foi possivel - deve ir por timeout`, err.message);
+        this.logger.error(`${channelA.id} >> Discagem direta nao foi possivel - deve ir por timeout`, err.message);
       })
 
   }
 
   private async dialChannelB(channelA: Channel, channelB: Channel, bridgeMain: Bridge, company: Company, dialTimeout?: any) {
     clearTimeout(dialTimeout);
-    this.logger.log(`Executando external dial ${channelB.name}`);
+    this.logger.log(`${channelA.id} >> Executando external dial para ${channelB.name}`);
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company.controlNumber);
       await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
       channelB.dial({ timeout: 30 });
     } catch (err) {
-      this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
+      this.logger.error(`${channelA.id} >>  Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
       this.callAction.hangupChannel(channelA);
       return;
     }
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
-    this.logger.log(`Canal ${channelB.name} atendeu ${channelA.name}`);
+    this.logger.log(`${channelA.id} >> Canal ${channelB.name} atendeu ${channelA.name}`);
     this.callAction.answerChannel(channelA);
     channelB.removeAllListeners('ChannelDestroyed');
     channelB.once('StasisEnd', (event, c) => {
-      this.logger.log(`Canal B ${c.id} desligou a chamada`);
+      this.logger.log(`${channelA.id} >> Canal B ${c.id} desligou a chamada`);
       this.callAction.hangupChannel(channelA);
     });
     this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);

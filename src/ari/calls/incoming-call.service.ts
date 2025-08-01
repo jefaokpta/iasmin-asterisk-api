@@ -19,7 +19,7 @@ export class IncomingCallService {
   ) {}
 
   async callAllUsers(ari: Client, channelA: Channel, company: Company, ariApp: string) {
-    this.logger.log('Chamando todos os usuários da empresa: ' + company.controlNumber);
+    this.logger.log(`${channelA.id} >> Chamando todos os usuários da empresa: ` + company.controlNumber);
     const users = company.attendantCallUsers
     if (users.length === 0) { //TODO: considerar assistentes de voz
       this.logger.warn('Não existe usuários da empresa: ' + company.controlNumber);
@@ -47,14 +47,14 @@ export class IncomingCallService {
           callerId: channelA.caller.number,
         })
         .catch((err) => {
-          this.logger.error('Erro ao originar chamada', err.message);
+          this.logger.error(`${channelA.id} >> Erro ao originar chamada`, err.message);
           this.callAction.hangupChannel(channelA);
         });
     });
   }
 
   private async channelBAnswered(channelA: Channel, channelB: Channel, dialedUsers: Channel[], ari: Client, dialTimeout: any, ariApp: string) {
-    this.logger.log(`Canal ${channelB.name} atendeu a chamada de ${channelA.caller.number}`);
+    this.logger.log(`${channelA.id} >> Canal ${channelB.name} atendeu a chamada de ${channelA.caller.number}`);
     const bridge = await this.callAction.createBridge(ari);
     channelA.removeAllListeners('StasisEnd');
     channelA.once('StasisEnd', (event, channel) => this.channelAHangup(channel, channelB));
@@ -69,13 +69,13 @@ export class IncomingCallService {
   }
 
   private channelBHangup(channelA: Channel, channelB: Channel, bridge: Bridge) {
-    this.logger.log(`Canal B ${channelB.id} finalizou a chamada`);
+    this.logger.log(`${channelA.id} >> Canal B ${channelB.id} finalizou a chamada`);
     this.callAction.hangupChannel(channelA);
     this.callAction.bridgeDestroy(bridge);
   }
 
   private channelAHangup(channelA: Channel, channelB: Channel) {
-    this.logger.log(`Canal A ${channelA.name} finalizou a chamada`);
+    this.logger.log(`${channelA.id} >> Canal A ${channelA.name} finalizou a chamada`);
     this.callAction.hangupChannel(channelB);
   }
 

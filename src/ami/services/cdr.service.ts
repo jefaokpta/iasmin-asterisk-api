@@ -54,13 +54,12 @@ export class CdrService {
   }
 
   private sendCdrToBackend(cdr: Cdr) {
-    this.logger.log(`Enviando CDR para o backend`);
     firstValueFrom(
       this.httpService.post(`${this.IASMIN_BACKEND_API}/cdr`, cdr, {
         timeout: this.HTTP_REQUEST_TIMEOUT,
       }),
     )
-      .then((response) => this.logger.log(`CDR enviada com sucesso! ${cdr.channel} ${response.data}`))
+      .then(() => this.logger.log(`CDR enviada com sucesso! ${cdr.uniqueId}`))
       .catch((e) => {
         this.logger.error(e.message);
         if (e.response?.data) {

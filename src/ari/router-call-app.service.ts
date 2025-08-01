@@ -94,7 +94,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       const company = await this.companyClientService.findByControlNumber(controlNumber);
       this.externalCallService.externalCall(ari, channel, company, ariApp);
     } catch (err) {
-      this.logger.error('Erro ao processar ligação de saida', err.message);
+      this.logger.error(`${channel.id} >> Erro ao processar ligação de saida`, err.message);
       this.callAction.hangupChannel(channel);
     }
   }
@@ -102,7 +102,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   private async inboundStasisStart(event: StasisStart, channel: Channel, ari: Client, ariApp = 'inbound-router-call-app') {
     if (this.initialStasisStartCheck(event, channel, ari)) return;
 
-    this.logger.log(`⬅ Entrando ligacao ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} UNIQUEID ${channel.id}`);
+    this.logger.log(`⬅ Ligacao de ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} UNIQUEID ${channel.id}`);
 
     try {
       await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'INBOUND' });
@@ -110,7 +110,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       await channel.setChannelVar({ variable: 'CDR(company)', value: company.controlNumber });
       this.incomingCallService.callAllUsers(ari, channel, company, ariApp);
     } catch (err) {
-      this.logger.error('Erro ao processar ligacao de entrada', err.message);
+      this.logger.error(`${channel.id} >> Erro ao processar ligacao de entrada`, err.message);
       this.callAction.hangupChannel(channel);
     }
   }
