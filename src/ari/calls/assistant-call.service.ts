@@ -23,12 +23,6 @@ export class AssistantCallService {
       appArgs: 'dialed',
     });
 
-    channelB.once('StasisStart', (event, channel) => {
-      this.logger.debug(`Canal B ${channel.name} entrou no StasisApp`);
-      clearTimeout(dialTimeout);
-      this.dialChannelB(channelA, channelB);
-    });
-
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
       this.callAction.hangupChannel(channelB);
@@ -43,9 +37,12 @@ export class AssistantCallService {
       this.logger.warn('ATENCAO! Dial feito pelo timeout')
       this.dialChannelB(channelA, channelB);
     }, 2000);
+
+    this.dialChannelB(channelA, channelB, dialTimeout);
   }
 
-  private async dialChannelB(channelA: Channel, channelB: Channel) {
+  private async dialChannelB(channelA: Channel, channelB: Channel, dialTimeout?: any) {
+    clearTimeout(dialTimeout);
     this.logger.log(`Executando assistant dial ${channelB.name}`);
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);

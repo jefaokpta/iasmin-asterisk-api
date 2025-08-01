@@ -52,11 +52,6 @@ export class ExternalCallService {
       appArgs: 'dialed',
     });
 
-    channelB.once('StasisStart', (event, channel) => {
-      this.logger.debug(`Canal B ${channel.name} entrou no StasisApp`);
-      // this.dialChannelB(channelA, channel, bridgeMain, company);
-    });
-
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} desligou a chamada`);
       this.callAction.hangupChannel(channelB);
@@ -86,8 +81,8 @@ export class ExternalCallService {
   }
 
   private async dialChannelB(channelA: Channel, channelB: Channel, bridgeMain: Bridge, company: string, dialTimeout?: any) {
-    this.logger.log(`Executando external dial ${channelB.name}`);
     clearTimeout(dialTimeout);
+    this.logger.log(`Executando external dial ${channelB.name}`);
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company);
       await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
