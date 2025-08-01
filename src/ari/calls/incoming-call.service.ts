@@ -22,7 +22,7 @@ export class IncomingCallService {
     this.logger.log(`${channelA.id} >> Chamando todos os usuários da empresa: ` + company.controlNumber);
     const users = company.attendantCallUsers
     if (users.length === 0) { //TODO: considerar assistentes de voz
-      this.logger.warn('Não existe usuários da empresa: ' + company.controlNumber);
+      this.logger.warn('Não existe usuários atendentes da empresa: ' + company.controlNumber);
       this.callAction.hangupChannel(channelA);
       return;
     }
