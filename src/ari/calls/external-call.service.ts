@@ -36,6 +36,7 @@ export class ExternalCallService {
 
     this.logger.debug(`${channelA.id} >> Telefone da empresa: ${company.phone}`);
 
+    await this.callAction.setChannelVar(channelA, 'CALLERID(all)', company.phone);
     const bridgeMain = await this.callAction.createBridge(ari);
 
     const channelB = await channelA.create({
@@ -77,7 +78,6 @@ export class ExternalCallService {
   private async dialChannelB(channelA: Channel, channelB: Channel, bridgeMain: Bridge, company: Company, dialTimeout?: any) {
     this.logger.log(`${channelA.id} >> Executando external dial para ${channelB.name}`);
     try {
-      // await this.callAction.setChannelVar(channelB, 'CALLERID(all)', company.phone);
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', company.controlNumber);
       clearTimeout(dialTimeout);
       await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
