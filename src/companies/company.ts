@@ -10,7 +10,7 @@ export class Company {
   readonly controlNumber: string;
 
   @IsNumberString()
-  readonly phone: string;
+  phone: string;
 
   @IsArray()
   readonly attendantCallUsers: string[];

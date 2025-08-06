@@ -34,8 +34,8 @@ export class ExternalCallService {
       return;
     }
 
+    if (channelA.caller.number === '26') company.phone = '1142104060'; //TODO: remover
     this.logger.debug(`${channelA.id} >> Telefone da empresa: ${company.phone}`);
-
     await this.callAction.setChannelVar(channelA, 'CALLERID(all)', company.phone);
     const bridgeMain = await this.callAction.createBridge(ari);
 
