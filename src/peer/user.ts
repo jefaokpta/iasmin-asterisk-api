@@ -12,4 +12,7 @@ export class User {
 
   @IsArray()
   readonly roles: string[];
+
+  @IsNotEmpty()
+  readonly ddr: string;
 }

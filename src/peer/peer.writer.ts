@@ -33,6 +33,7 @@ auth=${user.id}
 aors=${user.id}
 set_var=CDR(company)=${user.controlNumber}
 set_var=CDR(peer)=${user.id}
+set_var=PEER_DDR=${user.ddr}
 set_var=CALL_LIMIT=2
 set_var=GROUP()=${user.id}
 set_var=__TRANSFER_CONTEXT=TRANSFERING
