@@ -77,8 +77,10 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       }
 
       await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'OUTBOUND' });
-      const companyVar = await channel.getChannelVar({ variable: 'CDR(company)' });
-      const controlNumber = companyVar.value;
+      const companyChannelVar = await channel.getChannelVar({ variable: 'CDR(company)' });
+      const controlNumber = companyChannelVar.value;
+      const ddrChannelVar = await channel.getChannelVar({ variable: 'PEER_DDR' });
+      const ddr = ddrChannelVar.value;
       this.logger.log(
         `➡ Ligacao de ${channel.name} ${channel.caller.name} ${channel.caller.number} para ${channel.dialplan.exten} Empresa ${controlNumber} UNIQUEID ${channel.id}`,
       );
@@ -91,8 +93,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
         this.internalCallService.internalCall(ari, channel, ariApp);
         return;
       }
-      const company = await this.companyClientService.findByControlNumber(controlNumber);
-      this.externalCallService.externalCall(ari, channel, company, ariApp);
+      this.externalCallService.externalCall(ari, channel, controlNumber, ddr, ariApp);
     } catch (err) {
       this.logger.error(`${channel.id} >> Erro ao processar ligação de saida`, err.message);
       this.callAction.hangupChannel(channel);
