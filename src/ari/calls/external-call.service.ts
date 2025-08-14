@@ -34,7 +34,7 @@ export class ExternalCallService {
     }
 
     this.logger.debug(`${channelA.id} >> Telefone da empresa: ${ddr}`);
-    await this.callAction.setChannelVar(channelA, 'CALLERID(all)', ddr);
+    await this.callAction.setChannelVar(channelA, 'CALLERID(num)', ddr);
     const bridgeMain = await this.callAction.createBridge(ari);
 
     const channelB = await channelA.create({
