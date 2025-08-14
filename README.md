@@ -1,99 +1,167 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# iasmin-asterisk-api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend em NestJS responsável por integrar e orquestrar recursos do Asterisk (ARI e AMI), controlar o fluxo das ligações (inbound/outbound), criar e atualizar ramais PJSIP (peers) por usuário e receber/enviar CDRs para o iasmin-backend.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Este README documenta as tecnologias, arquitetura, variáveis de ambiente, como executar/depurar, boas práticas adotadas e orientações para manutenção e evolução (por humanos ou agentes de IA).
 
-## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Visão geral
 
-## Project setup
+- Framework: NestJS (v10)
+- ARI (Asterisk REST Interface): usado para roteamento/controle de chamadas em tempo real.
+- AMI (Asterisk Manager Interface): usado para eventos (CDR, segurança/anti-invasão) e comandos (ex.: pjsip reload).
+- Gravações: cria gravações por canal/ponte e converte para MP3 com ffmpeg.
+- Integração externa: envia CDRs e consulta empresas no iasmin-backend via HTTP.
+- CORS: habilitado por padrão (main.ts).
 
-```bash
-$ npm install
-```
 
-## Compile and run the project
+## Tecnologias
 
-```bash
-# development
-$ npm run start
+- NestJs (framework): https://docs.nestjs.com
+- Ari-Client (controle de fluxo de ligações via ARI): https://github.com/asterisk/node-ari-client
+- Asterisk-Manager (AMI): https://github.com/pipobscure/NodeJS-AsteriskManager
+- Axios (requisições HTTP externas)
+- @nestjs/config, @nestjs/schedule, @nestjs/jwt, multer (upload via FileInterceptor)
 
-# watch mode
-$ npm run start:dev
 
-# production mode
-$ npm run start:prod
-```
+## Arquitetura (módulos principais)
 
-## Run tests
+- AriModule
+  - RouterCallAppService: conecta ao ARI e inicia 2 apps: outbound-router-call-app e inbound-router-call-app. Controla o fluxo de chamadas.
+  - ExternalCallService/InternalCallService/IncomingCallService: regras para chamadas externas, internas e de entrada.
+  - CallAction utilitário: ações de canal/bridge/recording.
+- AmiModule
+  - AmiConnectionService: conecta ao AMI (keepConnected) e trata eventos de CDR e segurança (anti-invasão). Disponibiliza pjsipReload.
+  - CdrService: converte gravações para MP3 (ffmpeg) e envia CDR ao iasmin-backend.
+- CronModule
+  - CronService: tarefas agendadas (limpeza de áudios após 10 dias, reinicialização de bloqueios de invasão, escrita de lista de invasores bloqueados a cada 5 min).
+- UploadModule
+  - UploadController/UploadService: POST /uploads/:id (field audio) salva arquivo .mp3 (até 5MB) em AUDIO_RECORD/mp3s.
+- PeerModule
+  - PeerController: POST /peers escreve configuração pjsip-peers.conf com base na lista de usuários recebida.
+  - PeerWriter: gera conteúdo PJSIP para endpoints/aors/auth e escreve no diretório configurado.
+- SecurityModule
+  - Jwt global com secret definido por env; SecurityService gera/valida tokens (roles super/admin).
+- CompaniesModule
+  - CompanyClientService: consulta empresas via iasmin-backend (com Bearer obtido do SecurityService).
 
-```bash
-# unit tests
-$ npm run test
+Ponto de entrada: main.ts (habilita CORS e escuta em PORT ou 3000).
 
-# e2e tests
-$ npm run test:e2e
 
-# test coverage
-$ npm run test:cov
-```
+## Fluxo de chamadas (resumo)
 
-## Deployment
+- Outbound (origem no peer):
+  - RouterCallAppService (outbound-router-call-app)
+  - Valida token X-CALL-TOKEN (exceto caller.number === "jefao").
+  - Define CDR(userfield)=OUTBOUND e registra empresa/controle.
+  - Se exten tem < 8 dígitos: chamada interna (ou assistente quando *12345).
+  - Caso contrário: ExternalCallService disca via PJSIP usando prefixo e tronco configurados.
+- Inbound (origem externa):
+  - RouterCallAppService (inbound-router-call-app)
+  - Define CDR(userfield)=INBOUND.
+  - Descobre empresa pelo número discado e propaga chamada aos usuários da empresa.
+- Gravações: cria snoops por perna A/B e gravação MIXED de bridge.
+- CDRs: AMI emite; o serviço envia ao iasmin-backend, anexando nome do arquivo de gravação quando aplicável.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Observação: extensão especial *12345 invoca o AssistantCallService.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
-```bash
-$ npm install -g mau
-$ mau deploy
-```
+## Endpoints HTTP
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- POST /peers
+  - Body: array de usuários (id, name, controlNumber, ddr)
+  - Efeito: reescreve pjsip-peers.conf no ASTERISK_CONFIG.
+  - Exemplo (curl):
+    curl -X POST http://localhost:3000/peers \
+      -H "Content-Type: application/json" \
+      -d '[{"id":"1001","name":"Alice","controlNumber":"CN-01","ddr":"5511999999999"}]'
 
-## Resources
+- POST /uploads/:id
+  - Form-Data: audio (mimetype audio/mpeg, até 5MB)
+  - Retorno: { audio: "upload-<ts>-<id>.mp3" }
+  - Exemplo (curl):
+    curl -X POST http://localhost:3000/uploads/123 \
+      -F "audio=@/caminho/arquivo.mp3;type=audio/mpeg"
 
-Check out a few resources that may come in handy when working with NestJS:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Variáveis de ambiente
 
-## Support
+- PORT: porta HTTP do Nest (default 3000)
+- ARI_HOST: URL do ARI (ex.: http://127.0.0.1:8088)
+- ARI_USER, ARI_PASS: credenciais do ARI
+- AMI_HOST, AMI_PORT, AMI_USER, AMI_PASS: conexão ao AMI
+- PABX_TRUNK: nome do tronco de saída (ex.: my-trunk)
+- PABX_TECH_PREFIX: prefixo de tecnologia/operadora (ex.: 0, 031, etc.)
+- ASTERISK_CONFIG: diretório onde será escrito pjsip-peers.conf
+- AUDIO_RECORD: diretório base onde o Asterisk grava (e onde serão armazenados/conversos os áudios); subpasta mp3s é utilizada
+- IASMIN_BACKEND_API: base URL do iasmin-backend (ex.: https://backend.local/api)
+- JWT_SECRET: segredo para assinatura/validação dos JWTs internos
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Dicas:
+- Garanta que AUDIO_RECORD e ASTERISK_CONFIG existam e o processo tenha permissão de escrita.
+- ffmpeg deve estar instalado e no PATH para conversão de áudio.
 
-## Stay in touch
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Requisitos do ambiente
 
-## License
+- Node.js 20+
+- Asterisk com:
+  - ARI habilitado e aplicações configuradas: outbound-router-call-app e inbound-router-call-app
+  - AMI habilitado e credenciais
+  - Contextos compatíveis (ex.: VIP-PEERS, TRANSFERING) e tronco configurado
+- ffmpeg instalado
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Instalação
+
+- npm install
+- Crie um arquivo .env com as variáveis de ambiente listadas acima.
+
+
+## Execução
+
+- Desenvolvimento: npm run start (ou nest start)
+- Watch (recomendado): npm run start:dev:asterisk
+- Debug com inspect: npm run start:debug (porta 9229)
+- Produção: npm run build && npm run start:prod
+
+
+## Testes
+
+- Unitários: npm run test
+- E2E: npm run test:e2e
+- Cobertura: npm run test:cov
+
+
+## Boas práticas adotadas
+
+- DRY (Don’t Repeat Yourself): https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
+- Immutability (preferência por objetos imutáveis): https://en.wikipedia.org/wiki/Immutable_object
+- Validação/DTOs: class-validator/class-transformer quando aplicável
+- Logs com Nest Logger e tratamento de erros com mensagens claras
+- Separação de responsabilidades por módulo/serviço
+
+
+## Diretrizes para manutenção e agentes de IA
+
+- Diagnóstico rápido:
+  - Verifique conectividade ARI/AMI (variáveis de ambiente corretas, serviços do Asterisk ativos).
+  - Cheque logs do Nest (níveis: log, warn, error) e eventos de ARI (StasisStart) e AMI (cdr/invalidaccountid).
+  - Confirme permissões de escrita em AUDIO_RECORD e ASTERISK_CONFIG.
+  - Valide presença do ffmpeg no PATH.
+- Depuração:
+  - Use npm run start:debug e anexe um debugger (porta 9229).
+  - Pontos úteis: RouterCallAppService.outboundStasisStart/inboundStasisStart, ExternalCallService.externalCall, AmiConnectionService.onApplicationBootstrap, CdrService.cdrCreated.
+- Extensões/Pontos de evolução:
+  - Novas regras de roteamento: adicionar serviços no AriModule e chamar a partir do RouterCallAppService.
+  - Novos eventos AMI: estender AmiConnectionService.
+  - Novos endpoints HTTP: criar Controller/Service e registrar em um módulo específico.
+  - Integrações externas: usar HttpService/Axios com timeouts e autenticação via SecurityService.
+- Segurança:
+  - Defina JWT_SECRET seguro e rotacione conforme necessário.
+  - X-CALL-TOKEN é validado para chamadas outbound (exceto para caller "jefao").
+
+
+## Licença
+
+- Este projeto é UNLICENSED (conforme package.json).
