@@ -8,21 +8,20 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Bridge, Channel, Client, Endpoint, StasisStart } from 'ari-client';
 import { recordName } from '../util/utils';
 import { ChannelLeg } from '../util/enus/channel-leg.enum';
-import { Company } from '../../companies/company';
+import { Attendant, CompanyPhone } from '../../companies/types';
 
 @Injectable()
 export class IncomingCallService {
   private readonly logger = new Logger(IncomingCallService.name);
 
-  constructor(
-    private readonly callAction: CallActionService,
-  ) {}
+  constructor(private readonly callAction: CallActionService) {}
 
-  async callAllUsers(ari: Client, channelA: Channel, company: Company, ariApp: string) {
-    this.logger.log(`${channelA.id} >> Chamando todos os usuários da empresa: ` + company.controlNumber);
-    const users = company.attendantCallUsers
-    if (users.length === 0) { //TODO: considerar assistentes de voz
-      this.logger.warn('Não existe usuários atendentes da empresa: ' + company.controlNumber);
+  async callAllUsers(ari: Client, channelA: Channel, companyPhone: CompanyPhone, ariApp: string) {
+    this.logger.log(`${channelA.id} >> Chamando todos os usuários da empresa: ` + companyPhone.company.controlNumber);
+    const attendants = companyPhone.attendants;
+    if (attendants.length === 0) {
+      //TODO: considerar assistentes de voz
+      this.logger.warn('Não existe usuários atendentes da empresa: ' + companyPhone.company.controlNumber);
       this.callAction.hangupChannel(channelA);
       return;
     }
@@ -31,7 +30,7 @@ export class IncomingCallService {
     const dialTimeout = this.callAction.dialTimeout(channelA);
     channelA.once('StasisEnd', () => this.hangupAllChannels(dialedUsers, dialTimeout));
     this.callAction.ringChannel(channelA);
-    this.filterOfflineUsers(users, peers).forEach((user) => {
+    this.filterOfflineUsers(attendants, peers).forEach((attendant) => {
       const channelB = ari.Channel();
       dialedUsers.push(channelB);
 
@@ -41,7 +40,7 @@ export class IncomingCallService {
 
       channelB
         .originate({
-          endpoint: `PJSIP/${user}`,
+          endpoint: `PJSIP/${attendant.attendantId}`,
           app: ariApp,
           appArgs: 'dialed',
           callerId: channelA.caller.number,
@@ -53,7 +52,14 @@ export class IncomingCallService {
     });
   }
 
-  private async channelBAnswered(channelA: Channel, channelB: Channel, dialedUsers: Channel[], ari: Client, dialTimeout: any, ariApp: string) {
+  private async channelBAnswered(
+    channelA: Channel,
+    channelB: Channel,
+    dialedUsers: Channel[],
+    ari: Client,
+    dialTimeout: any,
+    ariApp: string,
+  ) {
     this.logger.log(`${channelA.id} >> Canal ${channelB.name} atendeu a chamada de ${channelA.caller.number}`);
     const bridge = await this.callAction.createBridge(ari);
     channelA.removeAllListeners('StasisEnd');
@@ -96,8 +102,9 @@ export class IncomingCallService {
     return ari.endpoints.list();
   }
 
-  private filterOfflineUsers(users: string[], peers: Endpoint[]): string[] {
-    return users
-      .filter((user) => peers.find((peer) => peer.resource === user && peer.state === 'online'));
+  private filterOfflineUsers(attendants: Attendant[], peers: Endpoint[]): Attendant[] {
+    return attendants.filter((attendant) =>
+      peers.find((peer) => peer.resource === attendant.attendantId.toString() && peer.state === 'online'),
+    );
   }
 }

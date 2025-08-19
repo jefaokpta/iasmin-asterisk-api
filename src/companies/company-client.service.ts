@@ -6,9 +6,9 @@
 import { ConfigService } from '@nestjs/config';
 import { SecurityService } from '../security/security.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { Company } from './company';
 import axios, { AxiosRequestConfig } from 'axios';
 import * as https from 'https';
+import { CompanyPhone } from './types';
 
 @Injectable()
 export class CompanyClientService {
@@ -22,22 +22,12 @@ export class CompanyClientService {
     private readonly securityService: SecurityService,
   ) {}
 
-  async findCompanyByPhone(extension: string): Promise<Company> {
+  async findCompanyByPhone(extension: string): Promise<CompanyPhone> {
     try {
       const response = await axios.get(`${this.BACKEND_API}/companies/phones/${extension}`, this.createHttpConfig());
       return response.data;
     } catch (err) {
       this.logger.error(`Erro ao obter empresa pelo numero de telefone: ${err}`);
-      throw err;
-    }
-  }
-
-  async findByControlNumber(controlNumber: string): Promise<Company> {
-    try {
-      const response = await axios.get(`${this.BACKEND_API}/companies/cn/${controlNumber}`, this.createHttpConfig());
-      return response.data;
-    } catch (err) {
-      this.logger.error(`Erro ao obter empresa pelo CN: ${err}`);
       throw err;
     }
   }
