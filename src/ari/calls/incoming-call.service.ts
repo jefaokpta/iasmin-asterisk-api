@@ -30,7 +30,13 @@ export class IncomingCallService {
     const dialTimeout = this.callAction.dialTimeout(channelA);
     channelA.once('StasisEnd', () => this.hangupAllChannels(dialedUsers, dialTimeout));
     this.callAction.ringChannel(channelA);
-    this.filterOfflineUsers(attendants, peers).forEach((attendant) => {
+    const attendantsOnline = this.filterOfflineUsers(attendants, peers);
+    if (attendantsOnline.length === 0) {
+      this.logger.warn('Não existe atendentes online no momento: ' + companyPhone.company.controlNumber);
+      this.callAction.hangupChannel(channelA);
+      return;
+    }
+    attendantsOnline.forEach((attendant) => {
       const channelB = ari.Channel();
       dialedUsers.push(channelB);
 
