@@ -84,7 +84,7 @@ export class ExternalCallService {
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', controlNumber);
       clearTimeout(dialTimeout);
-      await this.callAction.setChannelVar(channelB, 'CALLERID(all)', ddr);
+      await this.callAction.setChannelVar(channelB, 'CONNECTEDLINE(all)', ddr);
       await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
       channelB.dial({ timeout: 30 });
     } catch (err) {
