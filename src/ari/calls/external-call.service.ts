@@ -34,7 +34,7 @@ export class ExternalCallService {
     }
 
     this.logger.debug(`${channelA.id} >> Telefone da empresa: ${ddr}`);
-    await this.callAction.setChannelVar(channelA, 'CALLERID(num)', ddr);
+    // await this.callAction.setChannelVar(channelA, 'CALLERID(num)', ddr);
     const bridgeMain = await this.callAction.createBridge(ari);
 
     const channelB = await channelA.create({
@@ -45,8 +45,8 @@ export class ExternalCallService {
 
     channelB.once('StasisStart', (event, channel) => {
       this.logger.debug(`${channelA.id} >> Canal B ${channel.name} pego no stasis start`);
-      this.dialChannelB(channelA, channelB, bridgeMain, controlNumber, dialTimeout)
-    })
+      this.dialChannelB(channelA, channelB, bridgeMain, controlNumber, ddr, dialTimeout);
+    });
 
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`${channel.id} >> Canal A ${channel.name} desligou a chamada`);
@@ -65,23 +65,33 @@ export class ExternalCallService {
     });
 
     const dialTimeout = setTimeout(() => {
-      this.logger.warn(`${channelA.id} >> ATENCAO! Dial feito pelo timeout`)
-      this.dialChannelB(channelA, channelB, bridgeMain, controlNumber);
+      this.logger.warn(`${channelA.id} >> ATENCAO! Dial feito pelo timeout`);
+      this.dialChannelB(channelA, channelB, bridgeMain, controlNumber, ddr);
     }, 2000);
 
-    this.dialChannelB(channelA, channelB, bridgeMain, controlNumber, dialTimeout)
-
+    this.dialChannelB(channelA, channelB, bridgeMain, controlNumber, ddr, dialTimeout);
   }
 
-  private async dialChannelB(channelA: Channel, channelB: Channel, bridgeMain: Bridge, controlNumber: string, dialTimeout?: any) {
+  private async dialChannelB(
+    channelA: Channel,
+    channelB: Channel,
+    bridgeMain: Bridge,
+    controlNumber: string,
+    ddr: string,
+    dialTimeout?: any,
+  ) {
     this.logger.log(`${channelA.id} >> Executando external dial para ${channelB.name}`);
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', controlNumber);
+      await this.callAction.setChannelVar(channelB, 'CALLERID(all)', ddr);
       clearTimeout(dialTimeout);
       await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
       channelB.dial({ timeout: 30 });
     } catch (err) {
-      this.logger.error(`${channelA.id} >>  Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
+      this.logger.error(
+        `${channelA.id} >>  Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`,
+        err.message,
+      );
       if (!dialTimeout) this.callAction.hangupChannel(channelA);
       return;
     }
