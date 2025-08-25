@@ -83,8 +83,8 @@ export class ExternalCallService {
     this.logger.log(`${channelA.id} >> Executando external dial para ${channelB.name}`);
     try {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', controlNumber);
-      await this.callAction.setChannelVar(channelB, 'CALLERID(all)', ddr);
       clearTimeout(dialTimeout);
+      await this.callAction.setChannelVar(channelA, 'CALLERID(num)', ddr);
       await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
       channelB.dial({ timeout: 30 });
     } catch (err) {
