@@ -34,7 +34,9 @@ export class CallActionService {
 
   recordBridge(bridge: Bridge, ari: Client, recordName: string) {
     this.logger.log(`Gravando ponte mixed para ${recordName}`);
-    bridge.record({ name: recordName, format: 'sln' }, ari.LiveRecording(recordName)).catch((err) => this.logger.error('Erro ao gravar chamada', err.message));
+    bridge
+      .record({ name: recordName, format: 'sln' }, ari.LiveRecording(recordName))
+      .catch((err) => this.logger.error('Erro ao gravar chamada', err.message));
   }
 
   recordChannel(channel: Channel, ari: Client, recordName: string) {
@@ -48,8 +50,8 @@ export class CallActionService {
     bridge.destroy().catch((err) => this.logger.error(`Erro ao destruir bridge ${bridge.id}`, err.message));
   }
 
-  async setChannelVar(channel: Channel, variable: string, value: string) {
-    await channel.setChannelVar({
+  setChannelVar(channel: Channel, variable: string, value: string) {
+    return channel.setChannelVar({
       variable,
       value,
     });
@@ -58,7 +60,9 @@ export class CallActionService {
   addChannelsToBridge(bridge: Bridge, channels: Channel[]) {
     bridge
       .addChannel({ channel: channels.map((c) => c.id) })
-      .catch((err) => this.logger.error(`Erro ao adicionar canais ${channels[0].name} à bridge ${bridge.id}`, err.message));
+      .catch((err) =>
+        this.logger.error(`Erro ao adicionar canais ${channels[0].name} à bridge ${bridge.id}`, err.message),
+      );
   }
   async addChannelsToBridgeAsync(bridge: Bridge, channels: Channel[]) {
     await bridge.addChannel({ channel: channels.map((c) => c.id) });
@@ -76,6 +80,11 @@ export class CallActionService {
         },
         targetChannel,
       )
-      .catch((err) => this.logger.error(`Erro ao criar canal snoop para canal ${targetChannel.id} ${targetChannel.name}`, err.message));
+      .catch((err) =>
+        this.logger.error(
+          `Erro ao criar canal snoop para canal ${targetChannel.id} ${targetChannel.name}`,
+          err.message,
+        ),
+      );
   }
 }
