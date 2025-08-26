@@ -57,7 +57,12 @@ export class ExternalCallService {
       this.callAction.hangupChannel(channelA);
     });
 
-    await channelB.originate({
+    channelB.on('ChannelStateChange', (event, channel) => {
+      console.log(channel.state);
+      // if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
+    });
+
+    channelB.originate({
       endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
       app: ariApp,
       appArgs: 'dialed',
@@ -68,7 +73,6 @@ export class ExternalCallService {
         'CONNECTEDLINE(all)': ddr,
       },
     });
-
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
