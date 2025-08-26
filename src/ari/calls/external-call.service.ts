@@ -62,20 +62,21 @@ export class ExternalCallService {
       // if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
     });
 
-    await channelB.originate({
-      endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
-      app: ariApp,
-      appArgs: 'dialed',
-      timeout: 30,
-      originator: channelA.id,
-      variables: {
-        'PJSIP_HEADER(add,P-Asserted-Identity)': controlNumber,
-        'CONNECTEDLINE(all)': ddr,
-      },
-    });
+    await channelB
+      .originate({
+        endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
+        app: ariApp,
+        appArgs: 'dialed',
+        timeout: 30,
+        originator: channelA.id,
+        variables: {
+          'PJSIP_HEADER(add,P-Asserted-Identity)': controlNumber,
+          'CONNECTEDLINE(all)': ddr,
+        },
+      })
+      .then((channel) => this.logger.debug(`${channelA.id} >> Canal B ${channel.name} no then`));
 
-    this.logger.debug(`${channelA.id} >> TESTE Canais ${channelA.name} e ${channelB.name}`);
-
+    this.logger.debug(`${channelA.id} >> CHANNEL B ${channelB.name} depois do await`);
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
