@@ -10,15 +10,15 @@ import { recordName } from '../util/utils';
 import { ChannelLeg } from '../util/enus/channel-leg.enum';
 
 @Injectable()
-export class ExternalCallService {
+export class OutboundCallService {
   constructor(
     private readonly configService: ConfigService,
     private readonly callAction: CallActionService,
   ) {}
 
-  private readonly logger = new Logger(ExternalCallService.name);
+  private readonly logger = new Logger(OutboundCallService.name);
 
-  async externalCall(ari: Client, channelA: Channel, controlNumber: string, ddr: string, ariApp: string) {
+  async outboundCall(ari: Client, channelA: Channel, controlNumber: string, ddr: string, ariApp: string) {
     const trunkName = this.configService.get('PABX_TRUNK');
     if (!trunkName) {
       this.logger.warn(`${channelA.id} >> Falta definir trunk de saida: ${trunkName}`);

@@ -28,7 +28,7 @@ Este README documenta as tecnologias, arquitetura, variáveis de ambiente, como 
 
 - AriModule
   - RouterCallAppService: conecta ao ARI e inicia 2 apps: outbound-router-call-app e inbound-router-call-app. Controla o fluxo de chamadas.
-  - ExternalCallService/InternalCallService/IncomingCallService: regras para chamadas externas, internas e de entrada.
+  - OutboundCallService/InternalCallService/InboundCallService: regras para chamadas externas, internas e de entrada.
   - CallAction utilitário: ações de canal/bridge/recording.
 - AmiModule
   - AmiConnectionService: conecta ao AMI (keepConnected) e trata eventos de CDR e segurança (anti-invasão). Disponibiliza pjsipReload.
@@ -55,7 +55,7 @@ Ponto de entrada: main.ts (habilita CORS e escuta em PORT ou 3000).
   - Valida token X-CALL-TOKEN (exceto caller.number === "jefao").
   - Define CDR(userfield)=OUTBOUND e registra empresa/controle.
   - Se exten tem < 8 dígitos: chamada interna (ou assistente quando *12345).
-  - Caso contrário: ExternalCallService disca via PJSIP usando prefixo e tronco configurados.
+  - Caso contrário: OutboundCallService disca via PJSIP usando prefixo e tronco configurados.
 - Inbound (origem externa):
   - RouterCallAppService (inbound-router-call-app)
   - Define CDR(userfield)=INBOUND.
@@ -151,7 +151,8 @@ Dicas:
   - Valide presença do ffmpeg no PATH.
 - Depuração:
   - Use npm run start:debug e anexe um debugger (porta 9229).
-  - Pontos úteis: RouterCallAppService.outboundStasisStart/inboundStasisStart, ExternalCallService.externalCall, AmiConnectionService.onApplicationBootstrap, CdrService.cdrCreated.
+  - Pontos úteis: RouterCallAppService.outboundStasisStart/inboundStasisStart, OutboundCallService.externalCall,
+    AmiConnectionService.onApplicationBootstrap, CdrService.cdrCreated.
 - Extensões/Pontos de evolução:
   - Novas regras de roteamento: adicionar serviços no AriModule e chamar a partir do RouterCallAppService.
   - Novos eventos AMI: estender AmiConnectionService.

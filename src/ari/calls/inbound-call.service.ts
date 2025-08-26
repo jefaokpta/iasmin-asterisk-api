@@ -11,8 +11,8 @@ import { ChannelLeg } from '../util/enus/channel-leg.enum';
 import { Attendant, CompanyPhone } from '../../companies/types';
 
 @Injectable()
-export class IncomingCallService {
-  private readonly logger = new Logger(IncomingCallService.name);
+export class InboundCallService {
+  private readonly logger = new Logger(InboundCallService.name);
 
   constructor(private readonly callAction: CallActionService) {}
 

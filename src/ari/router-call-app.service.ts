@@ -6,10 +6,10 @@
 import { Channel, Client, connect, StasisStart } from 'ari-client';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ExternalCallService } from './calls/external-call.service';
+import { OutboundCallService } from './calls/outbound-call.service';
 import { InternalCallService } from './calls/internal-call.service';
 import { CallActionService } from './util/call-action.service';
-import { IncomingCallService } from './calls/incoming-call.service';
+import { InboundCallService } from './calls/inbound-call.service';
 import { SecurityService } from '../security/security.service';
 import { AssistantCallService } from './calls/assistant-call.service';
 import { CompanyClientService } from '../companies/company-client.service';
@@ -18,10 +18,10 @@ import { CompanyClientService } from '../companies/company-client.service';
 export class RouterCallAppService implements OnApplicationBootstrap {
   constructor(
     private readonly configService: ConfigService,
-    private readonly externalCallService: ExternalCallService,
+    private readonly externalCallService: OutboundCallService,
     private readonly internalCallService: InternalCallService,
     private readonly callAction: CallActionService,
-    private readonly incomingCallService: IncomingCallService,
+    private readonly incomingCallService: InboundCallService,
     private readonly securityService: SecurityService,
     private readonly assistantCallService: AssistantCallService,
     private readonly companyClientService: CompanyClientService,
@@ -98,7 +98,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
         this.internalCallService.internalCall(ari, channel, ariApp);
         return;
       }
-      this.externalCallService.externalCall(ari, channel, controlNumber, ddr, ariApp);
+      this.externalCallService.outboundCall(ari, channel, controlNumber, ddr, ariApp);
     } catch (err) {
       this.logger.error(`${channel.id} >> Erro ao processar ligação de saida`, err.message);
       this.callAction.hangupChannel(channel);
