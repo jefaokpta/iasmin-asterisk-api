@@ -64,8 +64,9 @@ export class CallActionService {
         this.logger.error(`Erro ao adicionar canais ${channels[0].name} à bridge ${bridge.id}`, err.message),
       );
   }
-  async addChannelsToBridgeAsync(bridge: Bridge, channels: Channel[]) {
-    await bridge.addChannel({ channel: channels.map((c) => c.id) });
+
+  addChannelsToBridgeAsync(bridge: Bridge, channels: Channel[]) {
+    return bridge.addChannel({ channel: channels.map((c) => c.id) });
   }
 
   createSnoopChannelAndRecord(targetChannel: Channel, recordName: string, ariApp: string) {

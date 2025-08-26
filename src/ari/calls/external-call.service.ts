@@ -34,18 +34,12 @@ export class ExternalCallService {
     }
 
     this.logger.debug(`${channelA.id} >> Telefone da empresa: ${ddr}`);
-    // await this.callAction.setChannelVar(channelA, 'CALLERID(num)', ddr);
-    const bridgeMain = await this.callAction.createBridge(ari);
 
-    const channelB = await channelA.create({
-      endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
-      app: ariApp,
-      appArgs: 'dialed',
-    });
+    const channelB = ari.Channel();
 
     channelB.once('StasisStart', (event, channel) => {
-      this.logger.debug(`${channelA.id} >> Canal B ${channel.name} pego no stasis start`);
-      this.dialChannelB(channelA, channelB, bridgeMain, controlNumber, ddr, dialTimeout);
+      this.logger.debug(`${channelA.id} >> Canal B ${channel.name} entrou no stasis start`);
+      this.channelBAnsweredCall(channelA, channel, bridgeMain, ari, ariApp);
     });
 
     channelA.once('StasisEnd', (event, channel) => {
@@ -59,42 +53,21 @@ export class ExternalCallService {
       this.callAction.hangupChannel(channelA);
     });
 
-    channelB.on('ChannelStateChange', (event, channel) => {
-      if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
-      if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channel, bridgeMain, ari, ariApp);
+    channelB.originate({
+      endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
+      app: ariApp,
+      appArgs: 'dialed',
+      timeout: 30,
+      originator: channelA.id,
+      variables: {
+        'PJSIP_HEADER(add,P-Asserted-Identity)': controlNumber,
+        'CONNECTEDLINE(all)': ddr,
+      },
     });
 
-    const dialTimeout = setTimeout(() => {
-      this.logger.warn(`${channelA.id} >> ATENCAO! Dial feito pelo timeout`);
-      this.dialChannelB(channelA, channelB, bridgeMain, controlNumber, ddr);
-    }, 2000);
+    const bridgeMain = await this.callAction.createBridge(ari);
+    this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
 
-    this.dialChannelB(channelA, channelB, bridgeMain, controlNumber, ddr, dialTimeout);
-  }
-
-  private async dialChannelB(
-    channelA: Channel,
-    channelB: Channel,
-    bridgeMain: Bridge,
-    controlNumber: string,
-    ddr: string,
-    dialTimeout?: any,
-  ) {
-    this.logger.log(`${channelA.id} >> Executando external dial para ${channelB.name}`);
-    try {
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', controlNumber);
-      clearTimeout(dialTimeout);
-      await this.callAction.setChannelVar(channelB, 'CONNECTEDLINE(all)', ddr);
-      await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
-      channelB.dial({ timeout: 30 });
-    } catch (err) {
-      this.logger.error(
-        `${channelA.id} >>  Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`,
-        err.message,
-      );
-      if (!dialTimeout) this.callAction.hangupChannel(channelA);
-      return;
-    }
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
