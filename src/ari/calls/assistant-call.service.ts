@@ -16,7 +16,8 @@ export class AssistantCallService {
   private readonly logger = new Logger(InternalCallService.name);
 
   async assistantCall(ari: Client, channelA: Channel, ariApp: string) {
-    const endpoint = channelA.dialplan.exten === '*12345' ? 'PJSIP/551234567890@VAPI' : `PJSIP/55${channelA.dialplan.exten}@VAPI`;
+    const endpoint =
+      channelA.dialplan.exten === '*12345' ? 'PJSIP/551234567890@VAPI' : `PJSIP/55${channelA.dialplan.exten}@VAPI`;
     const channelB = await channelA.create({
       endpoint,
       app: ariApp,
@@ -34,7 +35,7 @@ export class AssistantCallService {
     });
 
     const dialTimeout = setTimeout(() => {
-      this.logger.warn('ATENCAO! Dial feito pelo timeout')
+      this.logger.warn('ATENCAO! Dial feito pelo timeout');
       this.dialChannelB(channelA, channelB);
     }, 2000);
 
@@ -50,7 +51,10 @@ export class AssistantCallService {
       await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-destination)', channelA.dialplan.exten);
       channelB.dial({ timeout: 30 });
     } catch (err) {
-      this.logger.error(`${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`, err.message);
+      this.logger.error(
+        `${channelA.name} Erro ao discar para: ${channelB.name} ${channelA.dialplan.exten}`,
+        err.message,
+      );
       this.callAction.hangupChannel(channelA);
       return;
     }
@@ -64,7 +68,7 @@ export class AssistantCallService {
       this.callAction.hangupChannel(channelA);
       this.callAction.bridgeDestroy(bridgeMain);
     });
-    this.callAction.addChannelsToBridge(bridgeMain, [channelA, channelB]);
+    this.callAction.addChannelsToBridge(bridgeMain, [channelA.id, channelB.id]);
     this.callAction.recordBridge(bridgeMain, ari, recordName(channelA.id, ChannelLeg.MIXED));
   }
 }

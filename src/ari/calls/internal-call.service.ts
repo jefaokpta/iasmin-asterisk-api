@@ -30,7 +30,7 @@ export class InternalCallService {
         this.callAction.hangupChannel(channelA);
         this.callAction.bridgeDestroy(bridgeMain);
       });
-      this.callAction.addChannelsToBridge(bridgeMain, [channelA, channel]);
+      this.callAction.addChannelsToBridge(bridgeMain, [channelA.id, channel.id]);
     });
 
     channelB.on('ChannelStateChange', (event, channel) => {

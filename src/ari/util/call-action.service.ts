@@ -57,16 +57,10 @@ export class CallActionService {
     });
   }
 
-  addChannelsToBridge(bridge: Bridge, channels: Channel[]) {
-    bridge
-      .addChannel({ channel: channels.map((c) => c.id) })
-      .catch((err) =>
-        this.logger.error(`Erro ao adicionar canais ${channels[0].name} à bridge ${bridge.id}`, err.message),
-      );
-  }
-
-  addChannelsToBridgeAsync(bridge: Bridge, channels: Channel[]) {
-    return bridge.addChannel({ channel: channels.map((c) => c.id) });
+  addChannelsToBridge(bridge: Bridge, channelIds: string[]) {
+    return bridge.addChannel({
+      channel: channelIds,
+    });
   }
 
   createSnoopChannelAndRecord(targetChannel: Channel, recordName: string, ariApp: string) {

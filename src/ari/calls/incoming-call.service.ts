@@ -76,7 +76,7 @@ export class IncomingCallService {
     this.callAction.answerChannel(channelA);
     this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
     this.callAction.createSnoopChannelAndRecord(channelB, recordName(channelA.id, ChannelLeg.B), ariApp);
-    this.callAction.addChannelsToBridge(bridge, [channelA, channelB]);
+    this.callAction.addChannelsToBridge(bridge, [channelA.id, channelB.id]);
     this.callAction.recordBridge(bridge, ari, recordName(channelA.id, ChannelLeg.MIXED));
   }
 

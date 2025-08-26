@@ -34,16 +34,13 @@ export class ExternalCallService {
     }
 
     this.logger.debug(`${channelA.id} >> Telefone da empresa: ${ddr}`);
-
-    const channelB = ari.Channel();
-
     const bridgeMain = await this.callAction.createBridge(ari);
 
-    channelB.once('StasisStart', async (event, channel) => {
-      this.logger.debug(`${channelA.id} >> Canais ${channelA.name} e ${channel.name} add a bridge`);
-      await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channel]);
-      this.logger.debug(`${channelA.id} >> Canal B ${channel.name} entrou no stasis start`);
-      this.channelBAnsweredCall(channelA, channel, bridgeMain, ari, ariApp);
+    const channelB = await ari.channels.create({
+      endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
+      app: ariApp,
+      appArgs: 'dialed',
+      originator: channelA.id,
     });
 
     channelA.once('StasisEnd', (event, channel) => {
@@ -58,25 +55,15 @@ export class ExternalCallService {
     });
 
     channelB.on('ChannelStateChange', (event, channel) => {
-      console.log(channel.state);
-      // if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
+      if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channel, bridgeMain, ari, ariApp);
     });
 
-    await channelB
-      .originate({
-        endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
-        app: ariApp,
-        appArgs: 'dialed',
-        timeout: 30,
-        originator: channelA.id,
-        variables: {
-          'PJSIP_HEADER(add,P-Asserted-Identity)': controlNumber,
-          'CONNECTEDLINE(all)': ddr,
-        },
-      })
-      .then((channel) => this.logger.debug(`${channelA.id} >> Canal B ${channel.name} no then`));
+    await this.callAction.addChannelsToBridge(bridgeMain, [channelA.id, channelB.id]);
+    await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', controlNumber);
+    await this.callAction.setChannelVar(channelB, 'CONNECTEDLINE(all)', ddr);
 
-    this.logger.debug(`${channelA.id} >> CHANNEL B ${channelB.name} depois do await`);
+    this.logger.debug(`${channelA.id} >> Executando external dial para ${channelB.name}`);
+    channelB.dial({ timeout: 30 });
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {

@@ -28,7 +28,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
   ) {}
 
   private readonly logger = new Logger(RouterCallAppService.name);
-  private readonly OUTBOUND_APP_NAME =  this.configService.get('ARI_APP_OUTBOUND_NAME') ?? 'outbound-router-call-app';
+  private readonly OUTBOUND_APP_NAME = this.configService.get('ARI_APP_OUTBOUND_NAME') ?? 'outbound-router-call-app';
   private readonly INBOUND_APP_NAME = this.configService.get('ARI_APP_INBOUND_NAME') ?? 'inbound-router-call-app';
 
   async onApplicationBootstrap() {
@@ -53,17 +53,16 @@ export class RouterCallAppService implements OnApplicationBootstrap {
         this.configService.get('ARI_HOST')!,
         this.configService.get('ARI_USER')!,
         this.configService.get('ARI_PASS')!,
-      )
+      );
       inboundConnect.on('StasisStart', (stasisStartEvent: StasisStart, channel: Channel) => {
         this.inboundStasisStart(stasisStartEvent, channel, inboundConnect);
-      })
+      });
       await inboundConnect.start(this.INBOUND_APP_NAME);
-      this.logger.log(`Roteador de chamadas: ${this.INBOUND_APP_NAME} 🚀`)
+      this.logger.log(`Roteador de chamadas: ${this.INBOUND_APP_NAME} 🚀`);
     } catch (e) {
       this.logger.error(`💣️ Erro ao conectar ou iniciar app ${this.INBOUND_APP_NAME}`, e.message);
       throw e;
     }
-
   }
 
   private async outboundStasisStart(
@@ -106,12 +105,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
     }
   }
 
-  private async inboundStasisStart(
-    event: StasisStart,
-    channel: Channel,
-    ari: Client,
-    ariApp = this.INBOUND_APP_NAME,
-  ) {
+  private async inboundStasisStart(event: StasisStart, channel: Channel, ari: Client, ariApp = this.INBOUND_APP_NAME) {
     if (this.initialStasisStartCheck(event, channel, ari)) return;
 
     this.logger.log(
