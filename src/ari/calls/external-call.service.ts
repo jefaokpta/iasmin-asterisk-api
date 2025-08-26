@@ -38,6 +38,7 @@ export class ExternalCallService {
     const channelB = ari.Channel();
 
     const bridgeMain = await this.callAction.createBridge(ari);
+    this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA]);
 
     channelB.once('StasisStart', async (event, channel) => {
       this.logger.debug(`${channelA.id} >> Canal B ${channel.name} entrou no stasis start`);
@@ -74,7 +75,7 @@ export class ExternalCallService {
       })
       .then((channel) => {
         this.logger.debug(`${channelA.id} >> Canais ${channelA.name} e ${channel.name} add a bridge`);
-        this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channel]);
+        this.callAction.addChannelsToBridgeAsync(bridgeMain, [channel]);
       });
   }
 
