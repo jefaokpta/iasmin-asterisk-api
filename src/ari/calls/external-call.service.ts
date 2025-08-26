@@ -60,10 +60,12 @@ export class ExternalCallService {
 
     await this.callAction.addChannelsToBridge(bridgeMain, [channelA.id, channelB.id]);
     await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', controlNumber);
-    await this.callAction.setChannelVar(channelB, 'CONNECTEDLINE(all)', ddr);
+    this.callAction.setChannelVar(channelB, 'CONNECTEDLINE(all)', ddr).then(() => {
+      this.logger.debug(`${channelA.id} >> Executando external dial para ${channelB.name}`);
+      channelB.dial({ timeout: 30 });
+    });
 
-    this.logger.debug(`${channelA.id} >> Executando external dial para ${channelB.name}`);
-    channelB.dial({ timeout: 30 });
+
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
