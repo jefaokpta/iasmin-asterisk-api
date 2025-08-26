@@ -53,7 +53,7 @@ export class ExternalCallService {
       this.callAction.hangupChannel(channelA);
     });
 
-    channelB.originate({
+    await channelB.originate({
       endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
       app: ariApp,
       appArgs: 'dialed',
@@ -66,6 +66,7 @@ export class ExternalCallService {
     });
 
     const bridgeMain = await this.callAction.createBridge(ari);
+    this.logger.debug(`${channelA.id} >> Canais ${channelA.name} e ${channelB.name} add a bridge`);
     this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
   }
 
