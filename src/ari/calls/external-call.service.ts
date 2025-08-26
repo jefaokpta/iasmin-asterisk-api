@@ -67,7 +67,6 @@ export class ExternalCallService {
 
     const bridgeMain = await this.callAction.createBridge(ari);
     this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channelB]);
-
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
