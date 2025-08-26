@@ -1,0 +1,24 @@
+services:
+  iasmin-asterisk-api:
+    image: node:20-alpine
+    container_name: iasmin-asterisk-api
+
+    working_dir: /app
+    env_file:
+      - .env
+    ports:
+      # Expose the Nest HTTP port (defaults to 3000 if PORT is not set in .env)
+      - "${PORT:-3000}:${PORT:-3000}"
+    volumes:
+      - ./:/app
+      - iasmin-asterisk-node-modules:/app/node_modules
+    command: sh -c "npm ci && npm run start:dev:asterisk"
+    restart: unless-stopped
+
+    # Limit container to use at most 1 CPU
+    # The 'cpus' key is honored by docker compose (non-swarm)
+    cpus: 1.0
+
+volumes:
+  iasmin-asterisk-node-modules:
+
