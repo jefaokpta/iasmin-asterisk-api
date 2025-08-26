@@ -40,8 +40,6 @@ export class ExternalCallService {
     const bridgeMain = await this.callAction.createBridge(ari);
 
     channelB.once('StasisStart', async (event, channel) => {
-      this.logger.debug(`${channelA.id} >> Canais ${channelA.name} e ${channel.name} add a bridge`);
-      await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, channel]);
       this.logger.debug(`${channelA.id} >> Canal B ${channel.name} entrou no stasis start`);
       this.channelBAnsweredCall(channelA, channel, bridgeMain, ari, ariApp);
     });
@@ -62,7 +60,7 @@ export class ExternalCallService {
       // if (channel.state === 'Ringing') this.callAction.ringChannel(channelA);
     });
 
-    channelB.originate({
+    const originated = await channelB.originate({
       endpoint: `PJSIP/${techPrefix}${channelA.dialplan.exten}@${trunkName}`,
       app: ariApp,
       appArgs: 'dialed',
@@ -73,6 +71,9 @@ export class ExternalCallService {
         'CONNECTEDLINE(all)': ddr,
       },
     });
+
+    this.logger.debug(`${channelA.id} >> Canais ${channelA.name} e ${originated.name} add a bridge`);
+    await this.callAction.addChannelsToBridgeAsync(bridgeMain, [channelA, originated]);
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
