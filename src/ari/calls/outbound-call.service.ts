@@ -66,16 +66,12 @@ export class OutboundCallService {
     await channelB.setChannelVar({ variable: CONNECTEDLINE, value: ddr });
 
     // Confirm vars are applied before dialing
-    const okSipHeader = await this.waitForChannelVar(channelB, SIP_HEADER_READ, controlNumber);
-    const okConnectedLine = await this.waitForChannelVar(channelB, CONNECTEDLINE, ddr);
+    const [okSipHeader, okConnectedLine] = await Promise.all([
+      this.waitForChannelVar(channelB, SIP_HEADER_READ, controlNumber),
+      this.waitForChannelVar(channelB, CONNECTEDLINE, ddr),
+    ]);
 
-    const debugSipHeader = await channelB.getChannelVar({ variable: 'PJSIP_HEADER(read,P-Asserted-Identity)' });
-    const debugConnectedLine = await channelB.getChannelVar({ variable: 'CONNECTEDLINE(num)' });
-
-    this.logger.debug(
-      // TODO: remover
-      `${channelA.id} >> Executando external dial para ${channelB.name} com origem: ${debugConnectedLine.value} SIP-Header: ${debugSipHeader.value}`,
-    );
+    this.logger.debug(`${channelA.id} >> Executando external dial para ${channelB.name}`);
 
     if (!okSipHeader || !okConnectedLine) {
       this.logger.error(
