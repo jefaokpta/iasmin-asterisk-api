@@ -62,10 +62,12 @@ export class OutboundCallService {
     await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,P-Asserted-Identity)', value: controlNumber });
     await channelB.setChannelVar({ variable: 'CONNECTEDLINE(all)', value: ddr });
 
+    const debugSipHeader = await channelB.getChannelVar({ variable: 'PJSIP_HEADER(read,P-Asserted-Identity)' });
     const debugConnectedLine = await channelB.getChannelVar({ variable: 'CONNECTEDLINE(num)' });
 
     this.logger.debug(
-      `${channelA.id} >> Executando external dial para ${channelB.name} com origem ${debugConnectedLine.value}`,
+      // TODO: remover
+      `${channelA.id} >> Executando external dial para ${channelB.name} com origem: ${debugConnectedLine.value} SIP-Header: ${debugSipHeader.value}`,
     );
     await channelB.dial({ timeout: 30 });
   }
