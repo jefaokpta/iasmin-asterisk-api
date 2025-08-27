@@ -62,16 +62,15 @@ export class OutboundCallService {
     const SIP_HEADER_READ = 'PJSIP_HEADER(read,P-Asserted-Identity)';
     const CONNECTEDLINE = 'CONNECTEDLINE(num)';
     await this.callAction.addChannelsToBridge(bridgeMain, [channelA.id, channelB.id]);
+
     await channelB.setChannelVar({ variable: SIP_HEADER_ADD, value: controlNumber });
     await channelB.setChannelVar({ variable: CONNECTEDLINE, value: ddr });
 
     // Confirm vars are applied before dialing
     const [okSipHeader, okConnectedLine] = await Promise.all([
-      this.waitForChannelVar(channelB, SIP_HEADER_READ, controlNumber),
-      this.waitForChannelVar(channelB, CONNECTEDLINE, ddr),
+      this.waitForChannelVar(channelB, SIP_HEADER_READ, controlNumber, SIP_HEADER_ADD),
+      this.waitForChannelVar(channelB, CONNECTEDLINE, ddr, CONNECTEDLINE),
     ]);
-
-    this.logger.debug(`${channelA.id} >> Executando external dial para ${channelB.name}`);
 
     if (!okSipHeader || !okConnectedLine) {
       this.logger.error(
@@ -79,11 +78,10 @@ export class OutboundCallService {
       );
       // Cleanup to avoid bad dial
       this.callAction.hangupChannel(channelB);
-      this.callAction.hangupChannel(channelA);
-      this.callAction.bridgeDestroy(bridgeMain);
       return;
     }
 
+    this.logger.debug(`${channelA.id} >> Executando external dial para ${channelB.name}`);
     await channelB.dial({ timeout: 30 });
   }
 
@@ -91,6 +89,7 @@ export class OutboundCallService {
     channel: Channel,
     readVariable: string,
     expectedValue: string,
+    setVariable: string,
     timeoutMs = 5000,
     intervalMs = 100,
   ): Promise<boolean> {
@@ -99,8 +98,10 @@ export class OutboundCallService {
       try {
         const res = await channel.getChannelVar({ variable: readVariable });
         if ((res?.value ?? '') === expectedValue) return true;
+        await channel.setChannelVar({ variable: setVariable, value: expectedValue });
       } catch (e: any) {
         this.logger.warn(`${channel.id} >> Falha ao ler variavel ${readVariable}: ${e?.message ?? e}`);
+        await channel.setChannelVar({ variable: setVariable, value: expectedValue });
       }
       await new Promise((r) => setTimeout(r, intervalMs));
     }
