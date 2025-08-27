@@ -46,9 +46,9 @@ export class AssistantCallService {
     clearTimeout(dialTimeout);
     this.logger.log(`Executando assistant dial ${channelB.name}`);
     try {
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-uniqueid)', channelA.id);
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-src)', channelA.caller.number);
-      await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,X-destination)', channelA.dialplan.exten);
+      await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,X-uniqueid)', value: channelA.id });
+      await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,X-src)', value: channelA.caller.number });
+      await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,X-destination)', value: channelA.dialplan.exten });
       channelB.dial({ timeout: 30 });
     } catch (err) {
       this.logger.error(

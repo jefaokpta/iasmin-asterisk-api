@@ -14,7 +14,6 @@ export class InternalCallService {
 
   internalCall(ari: Client, channelA: Channel, ariApp: string) {
     const channelB = ari.Channel();
-    const dialTimeout = this.callAction.dialTimeout(channelA);
 
     channelA.once('StasisEnd', (event, channel) => {
       this.logger.log(`Canal A ${channel.name} finalizou a chamada`);
@@ -22,7 +21,6 @@ export class InternalCallService {
     });
 
     channelB.once('StasisStart', async (event: StasisStart, channel: Channel) => {
-      clearTimeout(dialTimeout);
       this.callAction.answerChannel(channelA);
       const bridgeMain = await this.callAction.createBridge(ari);
       channel.once('StasisEnd', (event, c) => {
@@ -43,6 +41,7 @@ export class InternalCallService {
         app: ariApp,
         appArgs: 'dialed',
         callerId: `${channelA.caller.name} <${channelA.caller.number}>`,
+        timeout: 30,
       })
       .catch((err) => {
         this.logger.error(`Erro ao originar chamada ${channelA.name}`, err.message);

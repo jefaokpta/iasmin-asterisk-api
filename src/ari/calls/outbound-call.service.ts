@@ -59,10 +59,14 @@ export class OutboundCallService {
     });
 
     await this.callAction.addChannelsToBridge(bridgeMain, [channelA.id, channelB.id]);
-    await this.callAction.setChannelVar(channelB, 'PJSIP_HEADER(add,P-Asserted-Identity)', controlNumber);
-    await this.callAction.setChannelVar(channelB, 'CONNECTEDLINE(all)', ddr);
+    await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,P-Asserted-Identity)', value: controlNumber });
+    await channelB.setChannelVar({ variable: 'CONNECTEDLINE(all)', value: ddr });
 
-    this.logger.debug(`${channelA.id} >> Executando external dial para ${channelB.name}`);
+    const debugConnectedLine = await channelB.getChannelVar({ variable: 'CONNECTEDLINE(num)' });
+
+    this.logger.debug(
+      `${channelA.id} >> Executando external dial para ${channelB.name} com origem ${debugConnectedLine.value}`,
+    );
     await channelB.dial({ timeout: 30 });
   }
 

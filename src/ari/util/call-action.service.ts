@@ -25,13 +25,6 @@ export class CallActionService {
     return bridge;
   }
 
-  dialTimeout(channel: Channel, timeout: number = 30000) {
-    return setTimeout(() => {
-      this.logger.warn(`Timeout de ${timeout}ms para canal ${channel.name} atender a chamada`);
-      this.hangupChannel(channel);
-    }, timeout);
-  }
-
   recordBridge(bridge: Bridge, ari: Client, recordName: string) {
     this.logger.log(`Gravando ponte mixed para ${recordName}`);
     bridge
@@ -48,13 +41,6 @@ export class CallActionService {
 
   bridgeDestroy(bridge: Bridge) {
     bridge.destroy().catch((err) => this.logger.error(`Erro ao destruir bridge ${bridge.id}`, err.message));
-  }
-
-  setChannelVar(channel: Channel, variable: string, value: string) {
-    return channel.setChannelVar({
-      variable,
-      value,
-    });
   }
 
   addChannelsToBridge(bridge: Bridge, channelIds: string[]) {

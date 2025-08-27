@@ -27,21 +27,20 @@ export class InboundCallService {
     }
     const peers = await this.getPeers(ari);
     const dialedUsers: Channel[] = [];
-    const dialTimeout = this.callAction.dialTimeout(channelA);
-    channelA.once('StasisEnd', () => this.hangupAllChannels(dialedUsers, dialTimeout));
-    this.callAction.ringChannel(channelA);
+    channelA.once('StasisEnd', () => this.hangupAllChannels(dialedUsers));
     const attendantsOnline = this.filterOfflineUsers(attendants, peers);
     if (attendantsOnline.length === 0) {
       this.logger.warn('Não existe atendentes online no momento: ' + companyPhone.company.controlNumber);
       this.callAction.hangupChannel(channelA);
       return;
     }
+    this.callAction.ringChannel(channelA);
     attendantsOnline.forEach((attendant) => {
       const channelB = ari.Channel();
       dialedUsers.push(channelB);
 
       channelB.once('StasisStart', async (event: StasisStart, channel: Channel) =>
-        this.channelBAnswered(channelA, channel, dialedUsers, ari, dialTimeout, ariApp),
+        this.channelBAnswered(channelA, channel, dialedUsers, ari, ariApp),
       );
 
       channelB
@@ -50,6 +49,7 @@ export class InboundCallService {
           app: ariApp,
           appArgs: 'dialed',
           callerId: channelA.caller.number,
+          timeout: 30,
         })
         .catch((err) => {
           this.logger.error(`${channelA.id} >> Erro ao originar chamada`, err.message);
@@ -63,7 +63,6 @@ export class InboundCallService {
     channelB: Channel,
     dialedUsers: Channel[],
     ari: Client,
-    dialTimeout: any,
     ariApp: string,
   ) {
     this.logger.log(`${channelA.id} >> Canal ${channelB.name} atendeu a chamada de ${channelA.caller.number}`);
@@ -71,7 +70,6 @@ export class InboundCallService {
     channelA.removeAllListeners('StasisEnd');
     channelA.once('StasisEnd', (event, channel) => this.channelAHangup(channel, channelB));
     channelB.once('StasisEnd', (event, channel) => this.channelBHangup(channelA, channel, bridge));
-    clearTimeout(dialTimeout);
     this.cancelOthersDials(channelB, dialedUsers);
     this.callAction.answerChannel(channelA);
     this.callAction.createSnoopChannelAndRecord(channelA, recordName(channelA.id, ChannelLeg.A), ariApp);
@@ -99,8 +97,7 @@ export class InboundCallService {
       });
   }
 
-  private hangupAllChannels(dialedUsers: Channel[], dialTimeout: any) {
-    clearTimeout(dialTimeout);
+  private hangupAllChannels(dialedUsers: Channel[]) {
     dialedUsers.forEach((channel) => this.callAction.hangupChannel(channel));
   }
 
