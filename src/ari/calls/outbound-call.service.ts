@@ -58,9 +58,16 @@ export class OutboundCallService {
       if (channel.state === 'Up') this.channelBAnsweredCall(channelA, channel, bridgeMain, ari, ariApp);
     });
 
+    const SIP_HEADER_ADD = 'PJSIP_HEADER(add,P-Asserted-Identity)';
+    const SIP_HEADER_READ = 'PJSIP_HEADER(read,P-Asserted-Identity)';
+    const CONNECTEDLINE = 'CONNECTEDLINE(num)';
     await this.callAction.addChannelsToBridge(bridgeMain, [channelA.id, channelB.id]);
-    await channelB.setChannelVar({ variable: 'PJSIP_HEADER(add,P-Asserted-Identity)', value: controlNumber });
-    await channelB.setChannelVar({ variable: 'CONNECTEDLINE(all)', value: ddr });
+    await channelB.setChannelVar({ variable: SIP_HEADER_ADD, value: controlNumber });
+    await channelB.setChannelVar({ variable: CONNECTEDLINE, value: ddr });
+
+    // Confirm vars are applied before dialing
+    const okSipHeader = await this.waitForChannelVar(channelB, SIP_HEADER_READ, controlNumber);
+    const okConnectedLine = await this.waitForChannelVar(channelB, CONNECTEDLINE, ddr);
 
     const debugSipHeader = await channelB.getChannelVar({ variable: 'PJSIP_HEADER(read,P-Asserted-Identity)' });
     const debugConnectedLine = await channelB.getChannelVar({ variable: 'CONNECTEDLINE(num)' });
@@ -69,7 +76,39 @@ export class OutboundCallService {
       // TODO: remover
       `${channelA.id} >> Executando external dial para ${channelB.name} com origem: ${debugConnectedLine.value} SIP-Header: ${debugSipHeader.value}`,
     );
+
+    if (!okSipHeader || !okConnectedLine) {
+      this.logger.error(
+        `${channelA.id} >> Abortando discagem: variáveis não confirmadas. SIP_HEADER=${okSipHeader} CONNECTEDLINE_OK=${okConnectedLine}`,
+      );
+      // Cleanup to avoid bad dial
+      this.callAction.hangupChannel(channelB);
+      this.callAction.hangupChannel(channelA);
+      this.callAction.bridgeDestroy(bridgeMain);
+      return;
+    }
+
     await channelB.dial({ timeout: 30 });
+  }
+
+  private async waitForChannelVar(
+    channel: Channel,
+    readVariable: string,
+    expectedValue: string,
+    timeoutMs = 3000,
+    intervalMs = 100,
+  ): Promise<boolean> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      try {
+        const res = await channel.getChannelVar({ variable: readVariable });
+        if ((res?.value ?? '') === expectedValue) return true;
+      } catch (e: any) {
+        this.logger.warn(`${channel.id} >> Falha ao ler variavel ${readVariable}: ${e?.message ?? e}`);
+      }
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    return false;
   }
 
   private channelBAnsweredCall(channelA: Channel, channelB: Channel, bridgeMain: Bridge, ari: Client, ariApp: string) {
