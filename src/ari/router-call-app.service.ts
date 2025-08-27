@@ -92,13 +92,13 @@ export class RouterCallAppService implements OnApplicationBootstrap {
 
       if (channel.dialplan.exten.length < 8) {
         if (channel.dialplan.exten === '*12345') {
-          this.assistantCallService.assistantCall(ari, channel, ariApp);
+          await this.assistantCallService.assistantCall(ari, channel, ariApp);
           return;
         }
         this.internalCallService.internalCall(ari, channel, ariApp);
         return;
       }
-      this.externalCallService.outboundCall(ari, channel, controlNumber, ddr, ariApp);
+      await this.externalCallService.outboundCall(ari, channel, controlNumber, ddr, ariApp);
     } catch (err) {
       this.logger.error(`${channel.id} >> Erro ao processar ligação de saida`, err.message);
       this.callAction.hangupChannel(channel);
@@ -116,7 +116,7 @@ export class RouterCallAppService implements OnApplicationBootstrap {
       await channel.setChannelVar({ variable: 'CDR(userfield)', value: 'INBOUND' });
       const companyPhone = await this.companyClientService.findCompanyByPhone(channel.dialplan.exten);
       await channel.setChannelVar({ variable: 'CDR(company)', value: companyPhone.company.controlNumber });
-      this.incomingCallService.callAllUsers(ari, channel, companyPhone, ariApp);
+      await this.incomingCallService.callAllUsers(ari, channel, companyPhone, ariApp);
     } catch (err) {
       this.logger.error(`${channel.id} >> Erro ao processar ligacao de entrada`, err.message);
       this.callAction.hangupChannel(channel);
