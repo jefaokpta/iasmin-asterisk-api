@@ -91,7 +91,7 @@ export class OutboundCallService {
     channel: Channel,
     readVariable: string,
     expectedValue: string,
-    timeoutMs = 3000,
+    timeoutMs = 5000,
     intervalMs = 100,
   ): Promise<boolean> {
     const start = Date.now();
