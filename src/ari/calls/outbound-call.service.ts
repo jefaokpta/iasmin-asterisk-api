@@ -97,7 +97,9 @@ export class OutboundCallService {
     while (Date.now() - start < timeoutMs) {
       try {
         const res = await channel.getChannelVar({ variable: readVariable });
-        if ((res?.value ?? '') === expectedValue) return true;
+        const channelVar = res.value;
+        this.logger.debug(`${channel.id} >> Lendo variavel ${readVariable}: ${channelVar}`);
+        if ((channelVar ?? '') === expectedValue) return true;
         await channel.setChannelVar({ variable: setVariable, value: expectedValue });
       } catch (e: any) {
         this.logger.warn(`${channel.id} >> Falha ao ler variavel ${readVariable}: ${e?.message ?? e}`);
