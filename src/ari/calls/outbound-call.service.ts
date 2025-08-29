@@ -61,7 +61,7 @@ export class OutboundCallService {
     const SIP_HEADER_ADD = 'PJSIP_HEADER(add,P-Asserted-Identity)';
     const SIP_HEADER_READ = 'PJSIP_HEADER(read,P-Asserted-Identity)';
     const CONNECTEDLINE = 'CONNECTEDLINE(num)';
-    await this.callAction.addChannelsToBridge(bridgeMain, [channelA.id, channelB.id]);
+    await bridgeMain.addChannel({ channel: [channelA.id, channelB.id] });
 
     await channelB.setChannelVar({ variable: SIP_HEADER_ADD, value: controlNumber });
     await channelB.setChannelVar({ variable: CONNECTEDLINE, value: ddr });
