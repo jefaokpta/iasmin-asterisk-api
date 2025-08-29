@@ -66,20 +66,20 @@ export class OutboundCallService {
     await channelB.setChannelVar({ variable: SIP_HEADER_ADD, value: controlNumber });
     await channelB.setChannelVar({ variable: CONNECTEDLINE, value: ddr });
 
-    // // Confirm vars are applied before dialing
-    // const [okSipHeader, okConnectedLine] = await Promise.all([
-    //   this.waitForChannelVar(channelB, SIP_HEADER_READ, controlNumber, SIP_HEADER_ADD),
-    //   this.waitForChannelVar(channelB, CONNECTEDLINE, ddr, CONNECTEDLINE),
-    // ]);
-    //
-    // if (!okSipHeader || !okConnectedLine) {
-    //   this.logger.error(
-    //     `${channelA.id} >> Abortando discagem: variáveis não confirmadas. SIP_HEADER=${okSipHeader} CONNECTEDLINE_OK=${okConnectedLine}`,
-    //   );
-    //   // Cleanup to avoid bad dial
-    //   this.callAction.hangupChannel(channelB);
-    //   return;
-    // }
+    // Confirm vars are applied before dialing
+    const [okSipHeader, okConnectedLine] = await Promise.all([
+      this.waitForChannelVar(channelB, SIP_HEADER_READ, controlNumber, SIP_HEADER_ADD),
+      this.waitForChannelVar(channelB, CONNECTEDLINE, ddr, CONNECTEDLINE),
+    ]);
+
+    if (!okSipHeader || !okConnectedLine) {
+      this.logger.error(
+        `${channelA.id} >> Abortando discagem: variáveis não confirmadas. SIP_HEADER=${okSipHeader} CONNECTEDLINE_OK=${okConnectedLine}`,
+      );
+      // Cleanup to avoid bad dial
+      this.callAction.hangupChannel(channelB);
+      return;
+    }
 
     this.logger.debug(`${channelA.id} >> Executando external dial para ${channelB.name}`);
     await channelB.dial({ timeout: 30 });
